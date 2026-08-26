@@ -51,3 +51,11 @@ yarn-error.*
 /AGENTS.md
 /CLAUDE.md
 /roadmap/
+.agents/
+.claude/
+.claude-flow/
+.impeccable/
+.swarm/
+stitch-imports/
+preview/
+

@@ -1,7 +1,7 @@
 import { createBottomTabNavigator, type BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Pressable, StyleSheet, View } from "react-native";
-import { CalendarCheck, History, PillBottle, UserRound, type LucideIcon } from "lucide-react-native";
+import { Home, Pill, History, UserRound, type LucideIcon } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HomeScreen } from "../screens/HomeScreen";
 import { AddMedicationScreen } from "../screens/AddMedicationScreen";
@@ -10,6 +10,7 @@ import { MedicationDetailScreen } from "../screens/MedicationDetailScreen";
 import { HistoryScreen } from "../screens/HistoryScreen";
 import { MedicationsScreen } from "../screens/MedicationsScreen";
 import { SettingsScreen } from "../screens/SettingsScreen";
+import { OnboardingScreen } from "../screens/OnboardingScreen";
 import { RootStackParamList, RootTabParamList } from "./types";
 import { colors } from "../theme/colors";
 import { ptBR } from "../i18n/ptBR";
@@ -19,17 +20,17 @@ import { AppText } from "../components/ui/AppText";
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator<RootTabParamList>();
 
-const TAB_CONFIG: Record<keyof RootTabParamList, { flex: number; icon: LucideIcon; label: string }> = {
-  Home: { flex: 0.8, icon: CalendarCheck, label: ptBR.tabs.today },
-  Medications: { flex: 1.4, icon: PillBottle, label: ptBR.tabs.medications },
-  History: { flex: 1, icon: History, label: ptBR.tabs.history },
-  Profile: { flex: 0.8, icon: UserRound, label: ptBR.tabs.profile },
+const TAB_CONFIG: Record<keyof RootTabParamList, { icon: LucideIcon; label: string }> = {
+  Home: { icon: Home, label: ptBR.tabs.today },
+  Medications: { icon: Pill, label: ptBR.tabs.medications },
+  History: { icon: History, label: ptBR.tabs.history },
+  Profile: { icon: UserRound, label: ptBR.tabs.profile },
 };
 
 function MainTabs() {
   return (
     <Tabs.Navigator
-      tabBar={(props) => <MainTabBar {...props} />}
+      tabBar={(props) => <FloatingTabBar {...props} />}
       screenOptions={{
         headerShown: false,
       }}
@@ -66,37 +67,48 @@ function MainTabs() {
   );
 }
 
-function MainTabBar({ state, navigation }: BottomTabBarProps) {
+function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
-      {state.routes.map((route, index) => {
-        const config = TAB_CONFIG[route.name as keyof RootTabParamList];
-        const focused = state.index === index;
-        const color = focused ? colors.primary : colors.textMuted;
-        const Icon = config.icon;
+    <View style={[styles.floatingContainer, { bottom: Math.max(insets.bottom, 16) + 8 }]}>
+      <View style={styles.floatingPill}>
+        {state.routes.map((route, index) => {
+          const config = TAB_CONFIG[route.name as keyof RootTabParamList];
+          const focused = state.index === index;
+          const Icon = config.icon;
 
-        return (
-          <Pressable
-            accessibilityLabel={config.label}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: focused }}
-            key={route.key}
-            onLongPress={() => navigation.emit({ type: "tabLongPress", target: route.key })}
-            onPress={() => {
-              const event = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
-              if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
-            }}
-            style={({ pressed }) => [styles.tabItem, { flex: config.flex }, pressed && styles.tabPressed]}
-          >
-            <Icon color={color} size={25} strokeWidth={2} />
-            <AppText allowFontScaling={false} numberOfLines={1} style={[styles.tabLabel, { color }]} variant="caption" weight="medium">
-              {config.label}
-            </AppText>
-          </Pressable>
-        );
-      })}
+          return (
+            <Pressable
+              accessibilityLabel={config.label}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: focused }}
+              key={route.key}
+              onLongPress={() => navigation.emit({ type: "tabLongPress", target: route.key })}
+              onPress={() => {
+                const event = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
+                if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
+              }}
+              style={({ pressed }) => [
+                styles.navItem,
+                focused && styles.navItemActive,
+                pressed && styles.navItemPressed,
+              ]}
+            >
+              <Icon color={colors.text} size={22} strokeWidth={2.2} />
+              <AppText
+                allowFontScaling={false}
+                numberOfLines={1}
+                style={styles.navLabel}
+                variant="caption"
+                weight="bold"
+              >
+                {config.label}
+              </AppText>
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -104,6 +116,7 @@ function MainTabBar({ state, navigation }: BottomTabBarProps) {
 export function AppNavigator() {
   return (
     <Stack.Navigator
+      initialRouteName="MainTabs"
       screenOptions={{
         headerStyle: { backgroundColor: colors.background },
         headerShadowVisible: false,
@@ -111,6 +124,14 @@ export function AppNavigator() {
         headerTitleStyle: { fontFamily: fontFamilies.bold },
       }}
     >
+      <Stack.Screen
+        name="Onboarding"
+        options={{ headerShown: false }}
+      >
+        {({ navigation }) => (
+          <OnboardingScreen onComplete={() => navigation.replace("MainTabs")} />
+        )}
+      </Stack.Screen>
       <Stack.Screen
         name="MainTabs"
         component={MainTabs}
@@ -136,26 +157,46 @@ export function AppNavigator() {
 }
 
 const styles = StyleSheet.create({
-  tabBar: {
+  floatingContainer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
     alignItems: "center",
-    backgroundColor: colors.surface,
-    borderTopColor: colors.border,
-    borderTopWidth: 1,
+    pointerEvents: "box-none",
+  },
+  floatingPill: {
     flexDirection: "row",
-    minHeight: 76,
-    paddingTop: 8,
-  },
-  tabItem: {
     alignItems: "center",
-    gap: 3,
+    gap: 12,
+    backgroundColor: colors.white,
+    borderRadius: 40,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 40,
+    elevation: 12,
+  },
+  navItem: {
+    alignItems: "center",
     justifyContent: "center",
-    minHeight: 58,
+    gap: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 30,
   },
-  tabLabel: {
-    textAlign: "center",
-    width: "100%",
+  navItemActive: {
+    backgroundColor: colors.surfaceMuted,
   },
-  tabPressed: {
+  navItemPressed: {
     opacity: 0.7,
   },
+  navLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.text,
+    textAlign: "center",
+  },
 });
+

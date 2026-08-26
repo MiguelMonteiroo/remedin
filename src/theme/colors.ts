@@ -1,22 +1,39 @@
 export const colors = {
-  background: "#F8F4EB",
-  surface: "#FFFDF8",
-  surfaceMuted: "#F1ECE2",
-  text: "#242019",
-  textMuted: "#6F675D",
-  border: "#E3D8C8",
-  borderStrong: "#CFBEA9",
-  borderWarm: "#D8CBB8",
-  controlBorder: "#BFB5A8",
+  // Clean Edition v2 — Superfícies e fundos
+  background: "#FAFAFA",
+  surface: "#FFFFFF",
+  surfaceMuted: "#F0F2F5",
+
+  // Texto
+  text: "#1D1F24",
+  textMuted: "#8A96A3",
+
+  // Bordas (quase invisíveis)
+  border: "#F0F2F5",
+  borderStrong: "#E0E3E8",
+  borderWarm: "#E0E3E8",
+  controlBorder: "#D1D5DB",
+
+  // Identidade primária (Verde Botânico)
   primary: "#0F6B3A",
   primaryDark: "#0F6B3A",
   primaryMuted: "#6D927D",
   primarySoft: "#E2EEE7",
   primaryBorder: "#C7DDCF",
+  primaryGlow: "rgba(15,107,58,0.25)",
+
+  // Acento (Pêssego)
   accent: "#E99A75",
   accentSoft: "#FBE7DB",
   accentBorder: "#EEC3A7",
   accentSelectionBorder: "#F2C4A8",
+
+  // Bento Pastéis (ícones de medicamento)
+  bentoMenta: "#84DCAE",
+  bentoPeach: "#FFC6A5",
+  bentoLilac: "#D4C1FF",
+
+  // Semânticas
   info: "#4F7EA8",
   infoSoft: "#E1ECF5",
   infoBorder: "#A9C9E3",
@@ -29,4 +46,8 @@ export const colors = {
   dangerSoft: "#F7DEDB",
   dangerBorder: "#E9A39E",
   white: "#FFFFFF",
+
+  // Navy (mascote e modo escuro)
+  navyDeep: "#101A24",
+  navySurface: "#182430",
 };
