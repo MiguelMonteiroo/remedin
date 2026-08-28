@@ -28,10 +28,12 @@ export const colors = {
   accentBorder: "#EEC3A7",
   accentSelectionBorder: "#F2C4A8",
 
-  // Bento Pastéis (ícones de medicamento)
+  // Bento Colors (Bento Box Edition)
   bentoMenta: "#84DCAE",
   bentoPeach: "#FFC6A5",
   bentoLilac: "#D4C1FF",
+  bentoSun: "#FDE047",
+  bentoSky: "#93C5FD",
 
   // Semânticas
   info: "#4F7EA8",

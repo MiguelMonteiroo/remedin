@@ -30,7 +30,21 @@ O app passou por uma grande fase de estabilização e rebranding para **Remedin*
   - 100% integrado com a família de ícones Iconoir e livre de emojis.
 - [x] **Portar Redesign para React Native**: Implementar os componentes consolidados de `onboarding-welcome.html` na tela oficial `src/screens/onboarding/WelcomeScreen.tsx`.
 - [x] **Clean Edition (Design System v2) — Protótipo Aprovado**: Redesign completo da Home com estética arejada, tab bar flutuante, cards limpos e paleta Bento. Protótipo em `preview/home.html` aprovado em 23/08/2026 (ADR 0013).
-- [/] **Clean Edition — Implementação React Native**: Refatoração de `HomeScreen.tsx`, `AppNavigator.tsx` (tab bar flutuante) e `colors.ts` para a nova estética.
+- [x] **Aba Perfil — Personalização de Foto de Perfil & Seletor de Avatares**:
+  - Geração de 4 avatares exclusivos no estilo canônico minimalista flat 2D (Cachorro, Coruja, Gato e Urso) com fundos na paleta Bento do Remedin.
+  - Abertura de Bottom Sheet Modal ao tocar no card do perfil (`profile-card`).
+  - Suporte à inicial do nome com paleta de 6 cores em grade 3x2 (Menta, Azul Céu, Lilás, Pêssego, Amarelo Solar e Azul Marinho) com atualização em tempo real.
+- [x] **Aba Perfil — Configuração Completa de Lembretes**:
+  - Estruturação fiel dos 6 controles nativos de lembretes na ordem de dependência:
+    1. *Receber notificações* (Toggle interativo)
+    2. *Tocar no silencioso* (Toggle interativo)
+    3. *Avisar no horário exato* (Ação direta: Revisar)
+    4. *Alarme em tela cheia* (Toggle interativo)
+    5. *Detalhes na tela bloqueada* (Toggle interativo: Visíveis / Ocultos)
+    6. *Funcionamento em segundo plano* (Ação direta: Abrir configurações)
+  - Card dedicado "Testar alarme" em tom Pêssego com botão de ação e contagem regressiva de 5 segundos simulando o disparo do alarme.
+  - Seção "Sobre" com versão 1.0.0 e reforço do princípio local-first.
+- [/] **Clean Edition — Implementação React Native**: Refatoração de `HomeScreen.tsx`, `SettingsScreen.tsx`, `AppNavigator.tsx` (tab bar flutuante) e `colors.ts` para a nova estética.
 - [ ] **Refatoração UI/UX Avançada (Home & Empty States)**: Aplicar as diretrizes do design system e a Cápsula Companheira nos Empty States da Home e Banners de Adesão 100%.
 - [ ] **Documentação de Design**: Atualizar o Tema (`src/theme/colors.ts`) com os tokens consolidados.
 

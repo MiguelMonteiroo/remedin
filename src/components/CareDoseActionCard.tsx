@@ -16,6 +16,19 @@ type Props = {
   onPress?: () => void;
 };
 
+const BENTO_COLORS = [
+  colors.bentoMenta,
+  colors.bentoPeach,
+  colors.bentoLilac,
+  colors.bentoSun,
+  colors.bentoSky,
+];
+
+function getBentoColor(name: string) {
+  const hash = name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return BENTO_COLORS[hash % BENTO_COLORS.length];
+}
+
 export function CareDoseActionCard({
   time,
   name,
@@ -26,145 +39,88 @@ export function CareDoseActionCard({
   onSkip,
   onPress,
 }: Props) {
+  const bgColor = getBentoColor(name);
+
   return (
-    <View style={styles.container}>
-      <View style={styles.main}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Ver detalhes de ${name}`}
-          onPress={onPress}
-          style={styles.detailsArea}
-        >
-          <View style={styles.timePane}>
-            <AppText
-              ellipsizeMode="clip"
-              numberOfLines={1}
-              variant="subheading"
-              style={styles.time}
-            >
-              {time}
-            </AppText>
-          </View>
-          <View style={styles.info}>
-            <AppText variant="small" weight="bold" style={styles.name}>{name}</AppText>
-            <AppText variant="small" muted>
-              {dosage || "Dose programada"}
-            </AppText>
-          </View>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Marcar dose como tomada"
-          onPress={onTake}
-          style={({ pressed }) => [styles.takeButton, pressed && styles.pressed]}
-        >
-          <AppText variant="small" weight="bold" style={styles.takeText}>Tomar</AppText>
-        </Pressable>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Ver detalhes de ${name}`}
+      onPress={onPress}
+      style={({ pressed }) => [styles.container, pressed && styles.pressed]}
+    >
+      <View style={[styles.iconBox, { backgroundColor: bgColor }]}>
+        <AppText variant="subheading" weight="bold" style={styles.iconTime}>{time}</AppText>
+      </View>
+      
+      <View style={styles.info}>
+        <AppText variant="heading" weight="bold" style={styles.name}>{name}</AppText>
+        <AppText variant="subheading" style={styles.dosage}>
+          {dosage || "Dose programada"}
+        </AppText>
       </View>
 
-      <View style={styles.secondaryActions}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Adiar dose por ${snoozeMinutes} minutos`}
-          onPress={onSnooze}
-          style={styles.secondaryButton}
-        >
-          <Clock3 color={colors.primaryDark} size={19} strokeWidth={2} />
-          <AppText variant="small" style={styles.secondaryText}>
-            Adiar {snoozeMinutes} min
-          </AppText>
-        </Pressable>
-        <View style={styles.divider} />
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Pular dose"
-          onPress={onSkip}
-          style={styles.secondaryButton}
-        >
-          <SkipForward color={colors.primaryDark} size={19} strokeWidth={2} />
-          <AppText variant="small" style={styles.secondaryText}>
-            Pular dose
-          </AppText>
-        </Pressable>
-      </View>
-    </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Marcar dose como tomada"
+        onPress={onTake}
+        style={({ pressed }) => [styles.takeButton, pressed && styles.pressed]}
+      >
+        <AppText variant="subheading" weight="bold" style={styles.takeText}>Tomar</AppText>
+      </Pressable>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    alignItems: "center",
     backgroundColor: colors.surface,
     borderColor: colors.border,
-    borderRadius: radii.md,
+    borderRadius: radii.lg,
     borderWidth: 1,
-    marginBottom: spacing.md,
-    overflow: "hidden",
-  },
-  main: {
-    alignItems: "center",
     flexDirection: "row",
-    minHeight: 88,
+    gap: spacing.md,
+    padding: spacing.md,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    elevation: 1,
   },
-  detailsArea: {
+  iconBox: {
     alignItems: "center",
-    flex: 1,
-    flexDirection: "row",
-    minHeight: 88,
-  },
-  timePane: {
-    alignItems: "center",
-    alignSelf: "stretch",
-    backgroundColor: colors.accentSoft,
+    borderRadius: radii.md,
+    height: 56,
     justifyContent: "center",
-    paddingHorizontal: spacing.md,
-    flexShrink: 0,
-    width: 108,
+    width: 56,
   },
-  time: {
-    color: colors.accent,
-    fontVariant: ["tabular-nums"],
-    textAlign: "center",
-    width: "100%",
+  iconTime: {
+    color: colors.navyDeep,
   },
   info: {
     flex: 1,
-    paddingHorizontal: spacing.md,
+    justifyContent: "center",
   },
   name: {
+    color: colors.text,
+  },
+  dosage: {
+    color: colors.textMuted,
   },
   takeButton: {
     alignItems: "center",
-    backgroundColor: colors.primary,
-    borderRadius: radii.sm,
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radii.pill,
+    borderWidth: 2,
+    height: 48,
     justifyContent: "center",
-    marginRight: spacing.md,
-    minHeight: 52,
     paddingHorizontal: spacing.lg,
   },
   takeText: {
-    color: colors.white,
-  },
-  secondaryActions: {
-    borderTopColor: colors.border,
-    borderTopWidth: 1,
-    flexDirection: "row",
-    minHeight: 52,
-  },
-  secondaryButton: {
-    alignItems: "center",
-    flex: 1,
-    flexDirection: "row",
-    gap: spacing.sm,
-    justifyContent: "center",
-  },
-  secondaryText: {
     color: colors.primaryDark,
   },
-  divider: {
-    backgroundColor: colors.border,
-    width: 1,
-  },
   pressed: {
-    opacity: 0.8,
+    opacity: 0.7,
   },
 });

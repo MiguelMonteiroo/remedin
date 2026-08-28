@@ -17,41 +17,47 @@ export function CareNextDoseCard({ time, name, dosage, onPress }: Props) {
       style={({ pressed }) => [styles.container, pressed && styles.pressed]}
     >
       <View style={styles.heading}>
-        <Clock3 color={colors.accent} size={20} strokeWidth={2} />
-        <AppText variant="small" weight="bold" style={styles.headingText}>Próxima dose</AppText>
+        <Clock3 color={colors.primary} size={24} strokeWidth={2.5} />
+        <AppText variant="subheading" weight="bold" style={styles.headingText}>Próxima dose</AppText>
       </View>
       <View style={styles.content}>
         <AppText
           ellipsizeMode="clip"
           numberOfLines={1}
-          variant="heading"
+          variant="display"
+          weight="bold"
           style={styles.time}
         >
           {time}
         </AppText>
         <View style={styles.info}>
-          <AppText variant="small" weight="bold">{name || "Nenhuma dose pendente"}</AppText>
-          <AppText variant="caption" muted>{dosage || "Sem dosagem informada"}</AppText>
+          <AppText variant="heading" weight="bold" style={styles.nameText}>{name || "Nenhuma dose pendente"}</AppText>
+          <AppText variant="subheading" style={styles.dosageText}>{dosage || "Sem dosagem informada"}</AppText>
         </View>
-        {onPress ? <ChevronRight color={colors.accent} size={24} strokeWidth={2} /> : null}
       </View>
+      {onPress ? (
+        <View style={styles.actionRow}>
+          <ChevronRight color={colors.primary} size={32} strokeWidth={2.5} />
+        </View>
+      ) : null}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { backgroundColor: colors.accentSoft, borderColor: colors.accentBorder, borderRadius: radii.md, borderWidth: 1, padding: spacing.lg },
+  container: { backgroundColor: colors.primarySoft, borderRadius: radii.lg, padding: spacing.xl },
   heading: { alignItems: "center", flexDirection: "row", gap: spacing.sm, marginBottom: spacing.md },
-  headingText: { color: colors.accent },
-  content: { alignItems: "center", flexDirection: "row" },
+  headingText: { color: colors.primary },
+  content: { flexDirection: "column", gap: spacing.xs, marginBottom: spacing.sm },
   time: {
-    color: colors.accent,
-    flexShrink: 0,
+    color: colors.primaryDark,
     fontVariant: ["tabular-nums"],
-    marginRight: spacing.md,
-    textAlign: "center",
-    width: 108,
+    fontSize: 48,
+    lineHeight: 56,
   },
-  info: { flex: 1, marginRight: spacing.sm },
-  pressed: { opacity: 0.78 },
+  info: { flex: 1 },
+  nameText: { color: colors.primaryDark },
+  dosageText: { color: colors.primary },
+  actionRow: { alignItems: "flex-end", marginTop: spacing.md },
+  pressed: { opacity: 0.85 },
 });

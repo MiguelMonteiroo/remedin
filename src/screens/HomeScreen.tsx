@@ -206,14 +206,12 @@ export function HomeScreen({ navigation }: Props) {
             />
 
             {nextOccurrence ? (
-              <View style={styles.nextSection}>
-                <CareNextDoseCard
-                  time={getOccurrenceTime(nextOccurrence)}
-                  name={nextMedication?.name}
-                  dosage={nextMedication?.dosage}
-                  onPress={() => navigation.navigate("MedicationDetail", { medicationId: nextOccurrence.medicationId })}
-                />
-              </View>
+              <CareNextDoseCard
+                time={getOccurrenceTime(nextOccurrence)}
+                name={nextMedication?.name}
+                dosage={nextMedication?.dosage}
+                onPress={() => navigation.navigate("MedicationDetail", { medicationId: nextOccurrence.medicationId })}
+              />
             ) : (
               <View style={styles.completeBanner}>
                 <CheckCircle2 color={colors.success} size={24} strokeWidth={2} />
@@ -255,14 +253,13 @@ const styles = StyleSheet.create({
   centerText: { marginBottom: spacing.xl, marginTop: spacing.sm, textAlign: "center" },
   loadingText: { marginTop: spacing.md },
   errorText: { color: colors.danger, textAlign: "center" },
-  content: { paddingBottom: spacing.xxl },
-  nextSection: { marginTop: spacing.lg },
+  content: { paddingBottom: spacing.xxl, gap: spacing.lg },
   completeBanner: {
     alignItems: "center",
     backgroundColor: colors.successSoft,
     borderColor: colors.successBorder,
-    borderRadius: radii.md,
     borderWidth: 1,
+    borderRadius: radii.md,
     flexDirection: "row",
     gap: spacing.md,
     marginTop: spacing.lg,

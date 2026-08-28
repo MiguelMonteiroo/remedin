@@ -68,6 +68,31 @@ O **Remedin** possui uma identidade visual focada em clareza, alta legibilidade,
 
 ---
 
+## Avatares do Usuário & Personalização do Perfil
+- **Galeria Oficial de Avatares**: 4 personagens companheiros 2D minimalistas (`preview/assets/avatars/`):
+  - **Cachorro**: Fundo Verde Menta (`#84DCAE`) + Azul Marinho (`#101A24`).
+  - **Coruja**: Fundo Azul Céu (`#93C5FD`) + Pêssego (`#FFC6A5`).
+  - **Gato**: Fundo Lilás (`#D4C1FF`) + Azul Marinho (`#101A24`).
+  - **Urso**: Fundo Amarelo Solar (`#FDE047`) + Azul Marinho (`#101A24`).
+- **Avatar com Inicial do Nome**: Opção da letra inicial do usuário sobre fundo colorido, com seletor em grade 3x2 oferecendo 6 cores da identidade (Menta, Azul Céu, Lilás, Pêssego, Amarelo Solar, Azul Marinho).
+- **Interação**: Modal Bottom Sheet dedicado ("Personalizar Foto") com seleção e feedback em tempo real.
+
+---
+
+## Tela de Perfil & Configuração de Lembretes
+- **Card de Identificação**: Exibe avatar do usuário, nome e link de ação para edição rápida.
+- **Grupo de Configuração de Lembretes**: 6 controles organizados em ordem de dependência funcional:
+  1. *Receber notificações* (Toggle)
+  2. *Tocar no silencioso* (Toggle)
+  3. *Avisar no horário exato* (Ação: Revisar)
+  4. *Alarme em tela cheia* (Toggle)
+  5. *Detalhes na tela bloqueada* (Toggle: Visíveis / Ocultos)
+  6. *Funcionamento em segundo plano* (Ação: Abrir configurações)
+- **Card Testar Alarme**: Container Bento em tom Pêssego com botão de ação rápida simulando a contagem de disparo do alarme sonoro em 5 segundos.
+- **Seção Sobre**: Identificação da versão do app e garantia do modelo de privacidade local-first.
+
+---
+
 ## Regras de Geração Visual por IA (Mundo "Bento Tátil")
 - **Imutabilidade do Mascote (Sagrado):** A IA **não está autorizada** a gerar versões do mascote ("Cápsula Companheira") que alterem sua anatomia base (divisão de cores Menta/Azul, inclinação, formato de pílula grossa, olhos redondos e sorriso sutil). O mascote é uma âncora fixa. Variações de IA só podem alterar o ambiente, acessórios contextuais ou expressões (ex: dormindo), mantendo o core idêntico.
 - **Formas Companheiras (World-Building):** Para ilustrar telas, states e onboarding, a IA deve gerar assets geométricos (ex: calendários de humor, gráficos de stress, pílulas secundárias, checkmarks grandes) no estilo **"Bento Tátil"**. 
