@@ -14,7 +14,8 @@ import { AppButton } from "../components/ui/AppButton";
 import { AppCard } from "../components/ui/AppCard";
 import { AppText } from "../components/ui/AppText";
 import { Screen } from "../components/ui/Screen";
-import { colors } from "../theme/colors";
+import { useAppTheme } from "../theme/ThemeProvider";
+import { type ThemeColors } from "../theme/theme";
 import { spacing } from "../theme/spacing";
 
 interface DatabaseContextValue {
@@ -42,6 +43,8 @@ export function useDatabaseStatus() {
 }
 
 export function DatabaseProvider({ children }: { children: React.ReactNode }) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const [state, setState] = useState<DatabaseContextValue>({
     db: null,
     initialized: false,
@@ -76,8 +79,8 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
 
   if (state.error) {
     return (
-      <Screen style={styles.centeredScreen}>
-        <AppCard accessibilityRole="alert" style={styles.statusCard}>
+      <Screen style={[styles.centeredScreen, { backgroundColor: colors.background }]}>
+        <AppCard accessibilityRole="alert" style={[styles.statusCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={styles.iconContainer}>
             <Database color={colors.primaryDark} size={30} strokeWidth={2} />
           </View>
@@ -102,14 +105,14 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
 
   if (!state.initialized) {
     return (
-      <Screen style={styles.centeredScreen}>
+      <Screen style={[styles.centeredScreen, { backgroundColor: colors.background }]}>
         <View
           accessibilityLabel="Preparando seus dados"
           accessibilityRole="progressbar"
           style={styles.loadingContent}
         >
           <ActivityIndicator color={colors.primaryDark} size="large" />
-          <AppText muted>Preparando seus dados...</AppText>
+          <AppText muted style={{ color: colors.textMuted }}>Preparando seus dados...</AppText>
         </View>
       </Screen>
     );
@@ -122,7 +125,7 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   centeredScreen: {
     justifyContent: "center",
   },
@@ -145,6 +148,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   statusMessage: {
+    color: colors.textMuted,
     marginBottom: spacing.xl,
   },
   loadingContent: {

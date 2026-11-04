@@ -1,7 +1,8 @@
 import { StyleSheet, View } from "react-native";
 import { AppButton } from "./ui/AppButton";
 import { AppText } from "./ui/AppText";
-import { colors } from "../theme/colors";
+import { useAppTheme } from "../theme/ThemeProvider";
+import { type ThemeColors } from "../theme/theme";
 import { spacing } from "../theme/spacing";
 
 type Props = {
@@ -19,6 +20,8 @@ export function MedicationFormActionBar({
   error,
   onPress,
 }: Props) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   return (
     <View style={styles.container}>
       {error ? (
@@ -43,7 +46,7 @@ export function MedicationFormActionBar({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     backgroundColor: colors.background,
     borderTopColor: colors.border,

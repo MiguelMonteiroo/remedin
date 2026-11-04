@@ -6,8 +6,8 @@ import {
   Bell,
   Info,
   LockKeyhole,
+  LogOut,
   Maximize2,
-  Settings,
   TestTube2,
   UserRound,
   Volume2,
@@ -33,9 +33,10 @@ import {
   openNativeAlarmChannelSettings,
   requestNotificationPermission,
 } from "../services/notificationPermissionService";
-import type { ReminderPermissionState } from "../types/domain";
+import type { AuthProviderKind, ReminderPermissionState } from "../types/domain";
 import { validateProfileName } from "../utils/validation";
-import { colors } from "../theme/colors";
+import { useAppTheme } from "../theme/ThemeProvider";
+import { type ThemeColors } from "../theme/theme";
 import { radii } from "../theme/radii";
 import { spacing } from "../theme/spacing";
 import { fontFamilies } from "../theme/typography";
@@ -48,9 +49,13 @@ import {
 } from "../services/reminders/alarmPresentationDiagnostics";
 
 export function SettingsScreen() {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const {
     settings,
+    userAccount,
     updateUserName,
+    signOut,
     updateNotificationsEnabled,
     updateReminderSettings,
     runAlarmTest,
@@ -275,10 +280,19 @@ export function SettingsScreen() {
   }
 
   return (
-    <Screen>
+    <Screen style={{ backgroundColor: colors.background }}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        <AppText variant="title" style={styles.title}>{ptBR.profile.title}</AppText>
-        <AppText muted style={styles.subtitle}>{ptBR.profile.subtitle}</AppText>
+        <View style={styles.headerBlock}>
+          <AppText variant="caption" weight="bold" style={styles.eyebrow}>
+            SUA CONTA E APARELHO
+          </AppText>
+          <AppText accessibilityRole="header" variant="title" style={styles.title}>
+            {ptBR.profile.title}
+          </AppText>
+          <AppText muted style={[styles.subtitle, { color: colors.textMuted }]}>
+            {ptBR.profile.subtitle}
+          </AppText>
+        </View>
 
         {reminderSyncPending ? (
           <CareInfoTip text="Alguns lembretes aguardam atualização. O Remedin tentará novamente ao abrir o app." />
@@ -286,6 +300,7 @@ export function SettingsScreen() {
 
         <ProfileNamePanel
           editing={editingName}
+          email={userAccount?.email}
           error={nameError}
           name={settings.userName}
           nameDraft={nameDraft}
@@ -293,19 +308,21 @@ export function SettingsScreen() {
           onChange={(value) => { setNameDraft(value); if (nameError) setNameError(""); }}
           onEdit={() => setEditingName(true)}
           onSave={handleSaveName}
+          onSignOut={userAccount?.authenticated ? signOut : undefined}
+          provider={userAccount?.provider}
         />
 
         <SectionHeader title={ptBR.profile.remindersTitle} meta={ptBR.profile.remindersMeta} />
-        <AppCard style={styles.settingsGroup}>
+        <AppCard style={[styles.settingsGroup, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           {REMINDER_SETTING_ORDER.map(renderReminderSetting)}
         </AppCard>
 
         <AppCard style={styles.testCard}>
           <View style={styles.testHeading}>
-            <View style={styles.testIcon}><TestTube2 color={colors.accent} size={25} strokeWidth={2} /></View>
+            <View style={styles.testIcon}><TestTube2 color={colors.primaryDark} size={25} strokeWidth={2} /></View>
             <View style={styles.testCopy}>
-              <AppText variant="subheading" weight="semibold">Testar alarme</AppText>
-              <AppText variant="caption" muted>Confira som, vibração e tela antes do próximo horário.</AppText>
+              <AppText variant="subheading" weight="semibold" style={{ color: colors.text }}>Testar alarme</AppText>
+              <AppText variant="caption" muted style={{ color: colors.textMuted }}>Confira som, vibração e tela antes do próximo horário.</AppText>
             </View>
           </View>
           <AppButton disabled={advancedDisabled} icon={TestTube2} onPress={handleAlarmTest} title="Testar em 5 segundos" variant="secondary" />
@@ -316,8 +333,8 @@ export function SettingsScreen() {
         <View style={styles.aboutRow}>
           <Info color={colors.primaryMuted} size={22} strokeWidth={2} />
           <View style={styles.aboutCopy}>
-            <AppText variant="small" weight="semibold">Remedin 1.0.0</AppText>
-            <AppText variant="caption" muted>Lembretes pessoais armazenados somente neste aparelho.</AppText>
+            <AppText variant="small" weight="semibold" style={{ color: colors.text }}>Remedin 1.0.0</AppText>
+            <AppText variant="caption" muted style={{ color: colors.textMuted }}>Lembretes pessoais armazenados somente neste aparelho.</AppText>
           </View>
         </View>
       </ScrollView>
@@ -327,6 +344,7 @@ export function SettingsScreen() {
 
 type ProfileProps = {
   editing: boolean;
+  email?: string;
   error: string;
   name: string;
   nameDraft: string;
@@ -334,16 +352,42 @@ type ProfileProps = {
   onChange: (value: string) => void;
   onEdit: () => void;
   onSave: () => void;
+  onSignOut?: () => Promise<void> | void;
+  provider?: AuthProviderKind | null;
 };
 
-function ProfileNamePanel({ editing, error, name, nameDraft, onCancel, onChange, onEdit, onSave }: ProfileProps) {
+function ProfileNamePanel({
+  editing,
+  email,
+  error,
+  name,
+  nameDraft,
+  onCancel,
+  onChange,
+  onEdit,
+  onSave,
+  onSignOut,
+  provider,
+}: ProfileProps) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+  const providerLabel =
+    provider === "google"
+      ? "Conta Google"
+      : provider === "email"
+        ? "Conta Remedin"
+        : "Seu nome";
+
   return (
-    <AppCard style={styles.profileCard}>
+    <AppCard style={[styles.profileCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
       <View style={[styles.profileHeading, editing && styles.profileHeadingEditing]}>
         <View style={styles.avatar}><UserRound color={colors.primaryDark} size={27} strokeWidth={2} /></View>
         <View style={styles.profileCopy}>
-          <AppText variant="caption" muted>Seu nome</AppText>
+          <AppText variant="caption" muted style={{ color: colors.textMuted }}>{providerLabel}</AppText>
           {!editing ? <AppText variant="heading" style={styles.profileName}>{name}</AppText> : null}
+          {!editing && email ? (
+            <AppText variant="small" muted style={styles.profileEmail}>{email}</AppText>
+          ) : null}
         </View>
         {!editing ? <AppButton onPress={onEdit} size="compact" title="Editar" variant="ghost" /> : null}
       </View>
@@ -364,28 +408,47 @@ function ProfileNamePanel({ editing, error, name, nameDraft, onCancel, onChange,
             <AppButton disabled={Boolean(validateProfileName(nameDraft))} onPress={onSave} size="compact" style={styles.editButton} title="Salvar" />
           </View>
         </>
+      ) : onSignOut ? (
+        <View style={styles.signOutRow}>
+          <AppButton
+            accessibilityLabel="Sair da conta"
+            icon={LogOut}
+            onPress={() => void onSignOut()}
+            size="compact"
+            title="Sair da conta"
+            variant="ghost"
+          />
+        </View>
       ) : null}
     </AppCard>
   );
 }
 
-const styles = StyleSheet.create({
-  content: { paddingBottom: spacing.xxl },
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  content: { paddingBottom: 124 },
+  headerBlock: { marginBottom: spacing.lg },
+  eyebrow: {
+    color: colors.primary,
+    letterSpacing: 0.6,
+    marginBottom: 4,
+  },
   title: { color: colors.primaryDark },
-  subtitle: { marginBottom: spacing.lg, marginTop: spacing.xs },
-  profileCard: { marginBottom: spacing.md, padding: spacing.lg },
+  subtitle: { marginTop: spacing.xs },
+  profileCard: { borderRadius: radii.lg, marginBottom: spacing.md, padding: spacing.lg },
   profileHeading: { alignItems: "center", flexDirection: "row" },
   profileHeadingEditing: { marginBottom: spacing.md },
-  avatar: { alignItems: "center", backgroundColor: colors.primarySoft, borderRadius: radii.md, height: 52, justifyContent: "center", marginRight: spacing.md, width: 52 },
+  avatar: { alignItems: "center", backgroundColor: colors.primarySoft, borderColor: colors.border, borderRadius: radii.md, borderWidth: 1, height: 54, justifyContent: "center", marginRight: spacing.md, width: 54 },
   profileCopy: { flex: 1, marginRight: spacing.sm },
   profileName: { color: colors.primaryDark },
+  profileEmail: { color: colors.textMuted, marginTop: 2 },
+  signOutRow: { alignItems: "flex-start", borderTopColor: colors.border, borderTopWidth: 1, marginTop: spacing.md, paddingTop: spacing.md },
   input: { backgroundColor: colors.surface, borderColor: colors.borderStrong, borderRadius: radii.md, borderWidth: 1, color: colors.text, fontFamily: fontFamilies.regular, fontSize: 18, minHeight: 52, paddingHorizontal: spacing.md },
   inputError: { borderColor: colors.danger },
   nameError: { color: colors.danger, marginTop: spacing.sm },
   editActions: { flexDirection: "row", gap: spacing.md, marginTop: spacing.md },
   editButton: { flex: 1 },
-  settingsGroup: { marginBottom: spacing.lg, paddingBottom: 0, paddingHorizontal: spacing.lg, paddingTop: 0 },
-  testCard: { backgroundColor: colors.accentSoft, borderColor: colors.accentBorder, marginBottom: spacing.lg, padding: spacing.lg },
+  settingsGroup: { borderRadius: radii.lg, marginBottom: spacing.lg, paddingBottom: 0, paddingHorizontal: spacing.lg, paddingTop: 0 },
+  testCard: { backgroundColor: colors.accentSoft, borderColor: colors.accentBorder, borderRadius: radii.lg, marginBottom: spacing.lg, padding: spacing.lg },
   testHeading: { alignItems: "center", flexDirection: "row", marginBottom: spacing.lg },
   testIcon: { alignItems: "center", backgroundColor: colors.surface, borderRadius: radii.md, height: 48, justifyContent: "center", marginRight: spacing.md, width: 48 },
   testCopy: { flex: 1 },

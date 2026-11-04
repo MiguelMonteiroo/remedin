@@ -14,6 +14,8 @@ import {
   DoseLog,
   DoseOccurrence,
   ReminderSettings,
+  StoredUserCredential,
+  UserAccount,
 } from "../types/domain";
 import { createDoseService, DoseService } from "./doseService";
 import { createReminderScheduler } from "./reminderScheduler";
@@ -26,6 +28,7 @@ import { reconcileNotifications } from "./reminderSyncService";
 import { createReminderPermissionMonitor } from "./reminders/reminderPermissionMonitor";
 import { startReminderSyncInBackground } from "./reminders/reminderSyncCoordinator";
 import { createRepositories } from "../database/db";
+import { DEFAULT_USER_ACCOUNT } from "../database/repositories/authRepository";
 import { createMedicationPersistenceService } from "./medicationPersistenceService";
 import {
   generateDoseOccurrencesForDate,
@@ -33,10 +36,9 @@ import {
   AdherenceSummary,
 } from "../utils/doseEngine";
 import {
-  normalizeMedicationInput,
-  validateMedicationName,
+  validateEmail,
+  validatePassword,
   validateProfileName,
-  validateTimeHHMM,
 } from "../utils/validation";
 import { DEFAULT_REMINDER_SETTINGS } from "../utils/defaultReminderSettings";
 import { formatLocalDateTime } from "../utils/dateTime";
@@ -53,6 +55,13 @@ interface AppDataContextValue {
   refreshDoseLogs: () => Promise<void>;
   reminderSyncPending: boolean;
   settings: ReminderSettings;
+  userAccount: UserAccount;
+  savedAccounts: StoredUserCredential[];
+  signUpWithEmail: (name: string, email: string, password: string) => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: (name: string, email: string) => Promise<void>;
+  resetAccountPassword: (email: string, newPassword: string) => Promise<void>;
+  signOut: () => Promise<void>;
   addMedication: (name: string, dosage: string, time: string, notes: string, scheduleKind?: string, intervalHours?: number, weekdays?: number[]) => Promise<void>;
   removeMedication: (id: string) => Promise<void>;
   setDoseTaken: (occurrenceId: string, medicationId: string, scheduleId: string, isTaken: boolean) => Promise<void>;
@@ -72,7 +81,7 @@ interface AppDataContextValue {
     weekdays?: number[]
   ) => Promise<void>;
   updateUserName: (name: string) => Promise<void>;
-  completeOnboarding: (name: string) => Promise<void>;
+  completeOnboarding: (name?: string) => Promise<void>;
   updateNotificationsEnabled: (enabled: boolean) => Promise<void>;
   updateReminderSettings: (patch: Partial<ReminderSettings>) => Promise<void>;
   rescheduleMedicationNotifications: () => Promise<void>;
@@ -94,6 +103,13 @@ const AppDataContext = createContext<AppDataContextValue>({
   refreshDoseLogs: async () => {},
   reminderSyncPending: false,
   settings: DEFAULT_SETTINGS,
+  userAccount: DEFAULT_USER_ACCOUNT,
+  savedAccounts: [],
+  signUpWithEmail: async () => {},
+  signInWithEmail: async () => {},
+  signInWithGoogle: async () => {},
+  resetAccountPassword: async () => {},
+  signOut: async () => {},
   addMedication: async () => {},
   removeMedication: async () => {},
   setDoseTaken: async () => {},
@@ -138,6 +154,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const [logs, setLogs] = useState<DoseLog[]>([]);
   const [settings, setSettings] = useState<ReminderSettings>(DEFAULT_SETTINGS);
   const settingsRef = useRef<ReminderSettings>(DEFAULT_SETTINGS);
+  const [userAccount, setUserAccount] = useState<UserAccount>(DEFAULT_USER_ACCOUNT);
+  const [savedAccounts, setSavedAccounts] = useState<StoredUserCredential[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reminderSyncPending, setReminderSyncPending] = useState(false);
@@ -172,17 +190,22 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const loadData = useCallback(async () => {
     try {
       await ensureChannelCreated();
-      const [meds, scheds, doseLogs, appSettings] = await Promise.all([
-        repos.medications.getAll(),
-        repos.schedules.getAll(),
-        repos.doseLogs.getAll(),
-        repos.settings.get(),
-      ]);
+      const [meds, scheds, doseLogs, appSettings, account, storedAccounts] =
+        await Promise.all([
+          repos.medications.getAll(),
+          repos.schedules.getAll(),
+          repos.doseLogs.getAll(),
+          repos.settings.get(),
+          repos.auth.getAccount(),
+          repos.auth.getSavedAccounts(),
+        ]);
       setMedications(meds);
       setSchedules(scheds);
       setLogs(doseLogs);
       settingsRef.current = appSettings;
       setSettings(appSettings);
+      setUserAccount(account);
+      setSavedAccounts(storedAccounts);
       setError(null);
 
       const legacyMappings = await repos.notifications.getAll();
@@ -588,21 +611,107 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       const validationError = validateProfileName(name);
       if (validationError) throw new Error(validationError);
 
-      const updated = { ...settingsRef.current, userName: name.trim() };
+      const trimmed = name.trim();
+      const updated = { ...settingsRef.current, userName: trimmed };
       await repos.settings.update(updated);
       settingsRef.current = updated;
       setSettings(updated);
+      setUserAccount((prev) => ({ ...prev, name: trimmed }));
     },
     []
   );
 
-  const completeOnboarding = useCallback(async (name: string) => {
-    const validationError = validateProfileName(name);
+  const signUpWithEmail = useCallback(
+    async (name: string, email: string, password: string) => {
+      const nameError = validateProfileName(name);
+      if (nameError) throw new Error(nameError);
+      const emailError = validateEmail(email);
+      if (emailError) throw new Error(emailError);
+      const passwordError = validatePassword(password);
+      if (passwordError) throw new Error(passwordError);
+
+      const session = await repos.auth.signUpWithEmail(name, email, password);
+      const updatedSettings = {
+        ...settingsRef.current,
+        userName: session.name,
+      };
+      await repos.settings.update(updatedSettings);
+      settingsRef.current = updatedSettings;
+      setSettings(updatedSettings);
+      setUserAccount(session);
+      setSavedAccounts(await repos.auth.getSavedAccounts());
+    },
+    []
+  );
+
+  const signInWithEmail = useCallback(
+    async (email: string, password: string) => {
+      const emailError = validateEmail(email);
+      if (emailError) throw new Error(emailError);
+      const passwordError = validatePassword(password);
+      if (passwordError) throw new Error(passwordError);
+
+      const session = await repos.auth.signInWithEmail(email, password);
+      const updatedSettings = {
+        ...settingsRef.current,
+        userName: session.name,
+      };
+      await repos.settings.update(updatedSettings);
+      settingsRef.current = updatedSettings;
+      setSettings(updatedSettings);
+      setUserAccount(session);
+      setSavedAccounts(await repos.auth.getSavedAccounts());
+    },
+    []
+  );
+
+  const signInWithGoogle = useCallback(
+    async (name: string, email: string) => {
+      const nameError = validateProfileName(name);
+      if (nameError) throw new Error(nameError);
+      const emailError = validateEmail(email);
+      if (emailError) throw new Error(emailError);
+
+      const session = await repos.auth.signInWithGoogle(name, email);
+      const updatedSettings = {
+        ...settingsRef.current,
+        userName: session.name,
+      };
+      await repos.settings.update(updatedSettings);
+      settingsRef.current = updatedSettings;
+      setSettings(updatedSettings);
+      setUserAccount(session);
+      setSavedAccounts(await repos.auth.getSavedAccounts());
+    },
+    []
+  );
+
+  const resetAccountPassword = useCallback(
+    async (email: string, newPassword: string) => {
+      const emailError = validateEmail(email);
+      if (emailError) throw new Error(emailError);
+      const passwordError = validatePassword(newPassword);
+      if (passwordError) throw new Error(passwordError);
+
+      await repos.auth.resetPassword(email, newPassword);
+      setSavedAccounts(await repos.auth.getSavedAccounts());
+    },
+    []
+  );
+
+  const signOut = useCallback(async () => {
+    const signedOut = await repos.auth.signOut();
+    setUserAccount(signedOut);
+  }, []);
+
+  const completeOnboarding = useCallback(async (name?: string) => {
+    const resolvedName = (name ?? settingsRef.current.userName).trim();
+    const validationError = validateProfileName(resolvedName);
     if (validationError) throw new Error(validationError);
 
     const updated: ReminderSettings = {
       ...settingsRef.current,
-      userName: name.trim(),
+      userName: resolvedName,
       onboardingCompleted: true,
       reminderSetupCompleted: true,
     };
@@ -668,6 +777,13 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         refreshDoseLogs,
         reminderSyncPending,
         settings,
+        userAccount,
+        savedAccounts,
+        signUpWithEmail,
+        signInWithEmail,
+        signInWithGoogle,
+        resetAccountPassword,
+        signOut,
         addMedication,
         removeMedication,
         setDoseTaken,

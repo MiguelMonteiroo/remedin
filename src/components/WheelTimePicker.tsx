@@ -8,7 +8,8 @@ import {
   View,
 } from "react-native";
 import { AppText } from "./ui/AppText";
-import { colors } from "../theme/colors";
+import { useAppTheme } from "../theme/ThemeProvider";
+import { type ThemeColors } from "../theme/theme";
 import { radii } from "../theme/radii";
 import { spacing } from "../theme/spacing";
 import {
@@ -38,6 +39,8 @@ const MINUTES = Array.from({ length: 60 }, (_, index) =>
 );
 
 export function WheelTimePicker({ value, onChange, label }: Props) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const { hour, minute } = useMemo(() => parseTime(value), [value]);
   const latestTimeRef = useRef({ hour, minute });
   const pickerLabel = label || "Selecionar horário";
@@ -121,6 +124,8 @@ function WheelColumn({
   selectedValue,
   onSelect,
 }: WheelColumnProps) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const scrollRef = useRef<ScrollView>(null);
   const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selectedIndex = Math.max(0, options.indexOf(selectedValue));
@@ -267,7 +272,7 @@ function parseTime(value: string) {
   return { hour, minute };
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: { marginBottom: spacing.sm },
   header: {
     alignItems: "center",
@@ -281,11 +286,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     paddingHorizontal: spacing.md,
   },
-  columnHeading: { flex: 1, textAlign: "center" },
+  columnHeading: { color: colors.textMuted, flex: 1, textAlign: "center" },
   headingSpacer: { marginHorizontal: spacing.sm, width: 14 },
   pickerShell: {
     alignItems: "center",
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderColor: colors.controlBorder,
     borderRadius: radii.md,
     borderWidth: 1,
@@ -311,7 +316,7 @@ const styles = StyleSheet.create({
   wheel: { height: PICKER_HEIGHT, width: "100%" },
   wheelContent: { paddingBottom: WHEEL_PADDING, paddingTop: WHEEL_PADDING },
   option: { alignItems: "center", height: ITEM_HEIGHT, justifyContent: "center" },
-  optionText: { color: colors.textMuted, opacity: 0.52 },
+  optionText: { color: colors.textMuted },
   selectedText: { color: colors.primaryDark, opacity: 1 },
   separatorColumn: {
     alignItems: "center",

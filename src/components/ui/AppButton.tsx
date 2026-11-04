@@ -1,7 +1,7 @@
 import { Pressable, PressableProps, StyleSheet, View, ViewStyle } from "react-native";
 import type { LucideIcon } from "lucide-react-native";
 import { AppText } from "./AppText";
-import { colors } from "../../theme/colors";
+import { useAppTheme } from "../../theme/ThemeProvider";
 import { radii } from "../../theme/radii";
 import { spacing } from "../../theme/spacing";
 
@@ -34,17 +34,17 @@ export function AppButton({
   disabled,
   ...props
 }: Props) {
+  const { colors: themeColors } = useAppTheme();
   const isCompact = compact || size === "compact";
-  const isGhost = variant === "ghost";
-  const isDangerSoft = variant === "dangerSoft";
-  const usesDarkForeground = ["secondary", "success", "warning"].includes(variant);
-  const iconColor = isDangerSoft
-    ? colors.danger
-    : isGhost
-    ? colors.primary
-    : usesDarkForeground
-    ? colors.text
-    : colors.white;
+  const palette = {
+    primary: { backgroundColor: themeColors.primary, color: themeColors.onPrimary },
+    secondary: { backgroundColor: themeColors.primarySoft, color: themeColors.primaryDark },
+    success: { backgroundColor: themeColors.successSoft, color: themeColors.success },
+    warning: { backgroundColor: themeColors.warningSoft, color: themeColors.warning },
+    danger: { backgroundColor: themeColors.dangerSoft, color: themeColors.danger },
+    dangerSoft: { backgroundColor: themeColors.dangerSoft, color: themeColors.danger },
+    ghost: { backgroundColor: themeColors.surface, color: themeColors.primaryDark },
+  }[variant];
 
   return (
     <Pressable
@@ -58,22 +58,22 @@ export function AppButton({
       style={({ pressed }) => [
         styles.button,
         isCompact && styles.compact,
-        styles[variant],
+        { backgroundColor: palette.backgroundColor },
+        variant === "ghost" && { borderColor: themeColors.controlBorder, borderWidth: 1.5 },
+        variant === "dangerSoft" && { borderColor: themeColors.dangerBorder, borderWidth: 1.5 },
         pressed && styles.pressed,
         disabled && styles.disabled,
         style,
       ]}
     >
       <View style={styles.content}>
-        {Icon ? <Icon color={iconColor} size={18} strokeWidth={2.4} /> : null}
+        {Icon ? <Icon color={palette.color} size={18} strokeWidth={2.4} /> : null}
         <AppText
           variant="small"
           weight="bold"
           style={[
             styles.text,
-            isGhost && styles.ghostText,
-            isDangerSoft && styles.dangerSoftText,
-            usesDarkForeground && styles.darkText,
+            { color: palette.color },
           ]}
         >
           {title}
@@ -86,15 +86,15 @@ export function AppButton({
 const styles = StyleSheet.create({
   button: {
     alignItems: "center",
-    borderRadius: radii.md,
+    borderRadius: radii.pill,
     justifyContent: "center",
     minHeight: 56,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
   },
   compact: {
     minHeight: 48,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
   },
   content: {
@@ -104,49 +104,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     minWidth: 0,
   },
-  primary: {
-    backgroundColor: colors.primary,
-  },
-  secondary: {
-    backgroundColor: colors.accent,
-  },
-  success: {
-    backgroundColor: colors.success,
-  },
-  warning: {
-    backgroundColor: colors.warning,
-  },
-  danger: {
-    backgroundColor: colors.danger,
-  },
-  dangerSoft: {
-    backgroundColor: colors.dangerSoft,
-    borderColor: colors.dangerBorder,
-    borderWidth: 1,
-  },
-  ghost: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderWidth: 1,
-  },
   pressed: {
-    opacity: 0.8,
+    opacity: 0.85,
   },
   disabled: {
     opacity: 0.5,
   },
   text: {
-    color: colors.white,
     flexShrink: 1,
     textAlign: "center",
-  },
-  ghostText: {
-    color: colors.primary,
-  },
-  dangerSoftText: {
-    color: colors.danger,
-  },
-  darkText: {
-    color: colors.text,
   },
 });

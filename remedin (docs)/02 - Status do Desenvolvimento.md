@@ -1,5 +1,13 @@
 # 02 - Status do Desenvolvimento e Roadmap
 
+> Atualização de 28/10/2026: a identidade coral e os temas claro/escuro estão em implementação, não concluídos. O provider de tema já existe, mas as telas ainda usam principalmente as cores antigas. Acompanhe as pendências em [[../docs/superpowers/plans/2026-10-28-identidade-coral-temas|plano de identidade coral e temas]]. O teste de linha única do horário pendente e o erro de tipo do resumo diário foram corrigidos; a validação visual em Android permanece pendente.
+
+As variantes do botão compartilhado, os indicadores de status e a barra de navegação já recebem as cores do tema ativo. Os demais componentes e telas ainda precisam ser migrados em conjuntos de texto e fundo. A prévia ilustrativa está em `design/identidade/paleta/coral/interface/componentes.html`. Um teste de integração com tela de alarme simulada confirma que o provider de tema envolve a abertura a frio sem carregar o provider do banco; não substitui teste do alarme em dispositivo.
+
+O cartão de próxima dose da tela Hoje acompanha os dois temas.
+
+Atualização de implementação: os componentes principais da tela Hoje, a tela React Native de alarme, a lista de medicamentos, o histórico, o perfil, os detalhes e os formulários receberam cores de tema. O onboarding principal também recebeu a paleta, e recursos vetoriais do ícone coral foram adicionados ao Android. O trabalho permanece parcial: componentes legados ainda precisam de revisão, e a compilação Android e a aparência do ícone e das telas não foram verificadas em dispositivo.
+
 ## 📊 Status Atual do Projeto
 
 O app passou por uma grande fase de estabilização e rebranding para **Remedin**, unificando o sistema de alarmes nativos e tratamento de tela cheia/bloqueio.

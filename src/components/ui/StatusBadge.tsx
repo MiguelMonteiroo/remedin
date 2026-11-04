@@ -1,7 +1,7 @@
 import { StyleSheet, View } from "react-native";
 import { Circle, type LucideIcon } from "lucide-react-native";
 import { AppText } from "./AppText";
-import { colors } from "../../theme/colors";
+import { useAppTheme } from "../../theme/ThemeProvider";
 import { radii } from "../../theme/radii";
 import { spacing } from "../../theme/spacing";
 import { DoseStatus } from "../../types/domain";
@@ -22,44 +22,28 @@ const LABELS: Record<BadgeStatus, string> = {
   undone: "Desfeita",
 };
 
-const ICON_COLORS: Record<BadgeStatus, string> = {
-  pending: colors.warning,
-  taken: colors.success,
-  skipped: colors.danger,
-  snoozed: colors.info,
-  unrecorded: colors.danger,
-  active: colors.success,
-  paused: colors.warning,
-  undone: colors.textMuted,
-};
-
 export function StatusBadge({ status }: Props) {
+  const { colors } = useAppTheme();
+  const palette: Record<BadgeStatus, { color: string; background: string }> = {
+    pending: { color: colors.warning, background: colors.warningSoft },
+    taken: { color: colors.success, background: colors.successSoft },
+    skipped: { color: colors.danger, background: colors.dangerSoft },
+    snoozed: { color: colors.info, background: colors.infoSoft },
+    unrecorded: { color: colors.danger, background: colors.dangerSoft },
+    active: { color: colors.success, background: colors.successSoft },
+    paused: { color: colors.warning, background: colors.warningSoft },
+    undone: { color: colors.textMuted, background: colors.surfaceMuted },
+  };
+  const { color, background } = palette[status];
   const Icon: LucideIcon = Circle;
   return (
-    <View accessibilityLabel={`Status: ${LABELS[status]}`} accessible style={[styles.badge, styles[status]]}>
-      <Icon color={ICON_COLORS[status]} fill={ICON_COLORS[status]} size={8} strokeWidth={0} />
-      <AppText variant="caption" weight="semibold" style={[styles.text, styles[`${status}Text`]]}>{LABELS[status]}</AppText>
+    <View accessibilityLabel={`Status: ${LABELS[status]}`} accessible style={[styles.badge, { backgroundColor: background }]}>
+      <Icon color={color} fill={color} size={8} strokeWidth={0} />
+      <AppText variant="caption" weight="semibold" style={{ color }}>{LABELS[status]}</AppText>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   badge: { alignItems: "center", alignSelf: "flex-start", borderRadius: radii.pill, flexDirection: "row", gap: spacing.xs, paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
-  text: {},
-  pending: { backgroundColor: colors.warningSoft },
-  pendingText: { color: colors.warning },
-  taken: { backgroundColor: colors.successSoft },
-  takenText: { color: colors.success },
-  skipped: { backgroundColor: colors.dangerSoft },
-  skippedText: { color: colors.danger },
-  snoozed: { backgroundColor: colors.infoSoft },
-  snoozedText: { color: colors.info },
-  unrecorded: { backgroundColor: colors.dangerSoft },
-  unrecordedText: { color: colors.danger },
-  active: { backgroundColor: colors.successSoft },
-  activeText: { color: colors.success },
-  paused: { backgroundColor: colors.warningSoft },
-  pausedText: { color: colors.warning },
-  undone: { backgroundColor: colors.surfaceMuted },
-  undoneText: { color: colors.textMuted },
 });

@@ -17,7 +17,8 @@ import { IntervalHoursPicker } from "./IntervalHoursPicker";
 import { MedicationFormActionBar } from "./MedicationFormActionBar";
 import { MedicationFormStep } from "./MedicationFormStep";
 import { WheelTimePicker } from "./WheelTimePicker";
-import { colors } from "../theme/colors";
+import { useAppTheme } from "../theme/ThemeProvider";
+import { type ThemeColors } from "../theme/theme";
 import { radii } from "../theme/radii";
 import { spacing } from "../theme/spacing";
 import { fontFamilies } from "../theme/typography";
@@ -44,6 +45,8 @@ type Props = {
 
 type Step = 1 | 2 | 3 | 4;
 
+const FORM_STEPS: Step[] = [1, 2, 3, 4];
+
 const SCHEDULE_KINDS: { key: ScheduleKind; label: string; hint: string }[] = [
   { key: "dailyTimes", label: "Diário", hint: "Uma dose por dia" },
   { key: "intervalHours", label: "Intervalo", hint: "A cada número de horas" },
@@ -52,6 +55,8 @@ const SCHEDULE_KINDS: { key: ScheduleKind; label: string; hint: string }[] = [
 const WEEKDAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 export function MedicationFormScreen({ mode, initialValues, onBack, onSubmit }: Props) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const [values, setValues] = useState(initialValues);
   const [error, setError] = useState("");
   const [step, setStep] = useState<Step>(1);
@@ -146,7 +151,7 @@ export function MedicationFormScreen({ mode, initialValues, onBack, onSubmit }: 
   const title = mode === "add" ? ptBR.form.addTitle : ptBR.form.editTitle;
 
   return (
-    <Screen>
+    <Screen style={{ backgroundColor: colors.background }}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardArea}>
         <View style={styles.header}>
           <IconButton
@@ -158,18 +163,38 @@ export function MedicationFormScreen({ mode, initialValues, onBack, onSubmit }: 
             }}
           />
           <View style={styles.headerText}>
-            <AppText variant="title" style={styles.title}>{title}</AppText>
-            <AppText muted>{ptBR.form.subtitle}</AppText>
+            <AppText variant="caption" weight="bold" style={styles.eyebrow}>
+              {mode === "add" ? "NOVO TRATAMENTO" : "ATUALIZAR TRATAMENTO"}
+            </AppText>
+            <AppText accessibilityRole="header" variant="title" style={styles.title}>{title}</AppText>
+            <AppText muted style={{ color: colors.textMuted }}>{ptBR.form.subtitle}</AppText>
           </View>
         </View>
 
         <View accessibilityLabel={`Etapa ${step} de 4`} accessible style={styles.progressBlock}>
           <View style={styles.progressHeading}>
-            <AppText variant="caption" weight="semibold" style={styles.progressText}>Etapa {step} de 4</AppText>
-            <AppText variant="caption" muted>{getStepTitle(step)}</AppText>
+            <View style={styles.progressPill}>
+              <AppText variant="caption" weight="bold" style={styles.progressText}>
+                Etapa {step} de 4
+              </AppText>
+            </View>
+            <AppText variant="caption" weight="semibold" style={{ color: colors.textMuted }}>
+              {getStepTitle(step)}
+            </AppText>
           </View>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${step * 25}%` }]} />
+          <View style={styles.segmentedProgressTrack}>
+            {FORM_STEPS.map((item) => {
+              const active = item <= step;
+              return (
+                <View
+                  key={item}
+                  style={[
+                    styles.progressSegment,
+                    active ? styles.progressSegmentActive : styles.progressSegmentInactive,
+                  ]}
+                />
+              );
+            })}
           </View>
         </View>
 
@@ -267,7 +292,7 @@ export function MedicationFormScreen({ mode, initialValues, onBack, onSubmit }: 
             <SummaryLine label={ptBR.form.dosage} value={values.dosage || ptBR.form.noDosage} />
             <SummaryLine label={ptBR.form.time} value={values.time} />
             <SummaryLine label={ptBR.form.scheduleSummary} value={getScheduleSummary(values)} />
-            {values.notes.trim() ? <SummaryLine label={ptBR.form.observations} value={values.notes.trim()} /> : null}
+            {values.notes.trim() ? <SummaryLine label={ptBR.form.observations} value={values.notes.trim()} last /> : null}
           </MedicationFormStep>
         </ScrollView>
 
@@ -294,45 +319,75 @@ function getScheduleSummary(values: MedicationFormValues) {
 }
 
 function FieldLabel({ label }: { label: string }) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   return <AppText variant="small" weight="semibold" style={styles.label}>{label}</AppText>;
 }
 
 function FormError({ message }: { message: string }) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   return <AppText accessibilityLiveRegion="assertive" accessibilityRole="alert" variant="small" style={styles.errorText}>{message}</AppText>;
 }
 
-function SummaryLine({ label, value }: { label: string; value: string }) {
+function SummaryLine({ label, value, last = false }: { label: string; value: string; last?: boolean }) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   return (
-    <View style={styles.summaryLine}>
-      <AppText variant="caption" muted>{label}</AppText>
+    <View style={[styles.summaryLine, last && styles.summaryLineLast]}>
+      <AppText variant="caption" muted style={{ color: colors.textMuted }}>{label}</AppText>
       <AppText variant="small" weight="semibold" style={styles.summaryValue}>{value}</AppText>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   keyboardArea: { flex: 1 },
   header: { alignItems: "flex-start", flexDirection: "row", marginBottom: spacing.lg },
   headerText: { flex: 1, marginLeft: spacing.md },
+  eyebrow: {
+    color: colors.primary,
+    letterSpacing: 0.6,
+    marginBottom: 2,
+  },
   title: { color: colors.primaryDark },
   progressBlock: { marginBottom: spacing.lg },
   progressHeading: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", marginBottom: spacing.sm },
+  progressPill: {
+    backgroundColor: colors.primarySoft,
+    borderRadius: radii.pill,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 4,
+  },
   progressText: { color: colors.primaryDark },
-  progressTrack: { backgroundColor: colors.surfaceMuted, borderRadius: 8, height: 8, overflow: "hidden" },
-  progressFill: { backgroundColor: colors.primary, borderRadius: 8, height: "100%" },
+  segmentedProgressTrack: {
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+  progressSegment: {
+    borderRadius: radii.pill,
+    flex: 1,
+    height: 6,
+  },
+  progressSegmentActive: {
+    backgroundColor: colors.primary,
+  },
+  progressSegmentInactive: {
+    backgroundColor: colors.border,
+  },
   content: { paddingBottom: spacing.xl },
-  label: { marginBottom: spacing.sm, marginTop: spacing.md },
+  label: { color: colors.text, marginBottom: spacing.sm, marginTop: spacing.md },
   input: {
     backgroundColor: colors.surface,
     borderColor: colors.borderStrong,
-    borderRadius: radii.sm,
+    borderRadius: radii.md,
     borderWidth: 1,
     color: colors.text,
     fontFamily: fontFamilies.regular,
     fontSize: 18,
     lineHeight: 27,
-    minHeight: 52,
-    paddingHorizontal: spacing.md,
+    minHeight: 56,
+    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
   },
   notesInput: { minHeight: 112, textAlignVertical: "top" },
@@ -341,6 +396,7 @@ const styles = StyleSheet.create({
   weekdayRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginTop: spacing.md },
   weekdayButton: { minWidth: 62 },
   summaryLine: { borderBottomColor: colors.border, borderBottomWidth: 1, paddingVertical: spacing.md },
-  summaryValue: { marginTop: spacing.xs },
+  summaryLineLast: { borderBottomWidth: 0 },
+  summaryValue: { color: colors.text, marginTop: spacing.xs },
   errorText: { color: colors.danger, marginTop: spacing.md },
 });

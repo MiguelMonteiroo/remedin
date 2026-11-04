@@ -2,7 +2,8 @@ import { StyleSheet, Switch, View } from "react-native";
 import { AlertCircle, CheckCircle2, type LucideIcon } from "lucide-react-native";
 import { AppButton } from "./ui/AppButton";
 import { AppText } from "./ui/AppText";
-import { colors } from "../theme/colors";
+import { useAppTheme } from "../theme/ThemeProvider";
+import { type ThemeColors } from "../theme/theme";
 import { radii } from "../theme/radii";
 import { spacing } from "../theme/spacing";
 
@@ -33,6 +34,8 @@ export function SettingsRow({
   disabled = false,
   last = false,
 }: Props) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const StateIcon = stateTone === "positive" ? CheckCircle2 : AlertCircle;
 
   return (
@@ -41,7 +44,7 @@ export function SettingsRow({
         <Icon color={colors.primaryDark} size={23} strokeWidth={2} />
       </View>
       <View style={styles.copy}>
-        <AppText variant="small" weight="semibold">{title}</AppText>
+        <AppText variant="small" weight="semibold" style={{ color: colors.text }}>{title}</AppText>
         <AppText variant="caption" muted style={styles.description}>{description}</AppText>
         <View style={styles.stateRow}>
           <StateIcon
@@ -83,7 +86,7 @@ export function SettingsRow({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   row: { alignItems: "flex-start", flexDirection: "row", paddingVertical: spacing.lg },
   divider: { borderBottomColor: colors.border, borderBottomWidth: 1 },
   disabled: { opacity: 0.58 },
@@ -97,7 +100,7 @@ const styles = StyleSheet.create({
     width: 44,
   },
   copy: { flex: 1, marginRight: spacing.sm },
-  description: { marginTop: spacing.xs },
+  description: { color: colors.textMuted, marginTop: spacing.xs },
   stateRow: { alignItems: "center", flexDirection: "row", gap: spacing.xs, marginTop: spacing.sm },
   positive: { color: colors.success },
   attention: { color: colors.warning },

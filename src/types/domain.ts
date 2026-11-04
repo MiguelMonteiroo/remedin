@@ -67,6 +67,22 @@ export type ReminderSettings = {
   onboardingCompleted: boolean;
 };
 
+export type AuthProviderKind = "google" | "email";
+
+export type UserAccount = {
+  authenticated: boolean;
+  name: string;
+  email: string;
+  provider: AuthProviderKind | null;
+};
+
+export type StoredUserCredential = {
+  name: string;
+  email: string;
+  password?: string;
+  provider: AuthProviderKind;
+};
+
 export type ReminderArtifactKind =
   | "preAlert"
   | "doseAlarm"

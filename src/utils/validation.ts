@@ -1,9 +1,27 @@
 import { ScheduleKind, MedicationSchedule } from "../types/domain";
 
 const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function validateProfileName(name: string): string | null {
   if (!name.trim()) return "Informe como podemos chamar você.";
+  return null;
+}
+
+export function validateEmail(email: string): string | null {
+  const trimmed = email.trim();
+  if (!trimmed) return "Informe seu e-mail.";
+  if (!emailRegex.test(trimmed)) {
+    return "Digite um e-mail válido (ex: nome@email.com).";
+  }
+  return null;
+}
+
+export function validatePassword(password: string): string | null {
+  if (!password) return "Informe sua senha.";
+  if (password.length < 6) {
+    return "A senha deve ter pelo menos 6 caracteres.";
+  }
   return null;
 }
 

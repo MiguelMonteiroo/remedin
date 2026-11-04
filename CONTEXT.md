@@ -44,12 +44,12 @@ _Avoid_: Completed medication
 A past dose occurrence for which the user made no explicit taken, skipped, or snoozed action before the day ended.
 _Avoid_: Missed dose, forgotten dose
 
-**Local profile**:
-The person's display name stored only on the device and used to personalize Remedin. It is not an account, login, or cloud identity.
-_Avoid_: User account, registered user
+**User account**:
+The authenticated identity of the person using Remedin (via Google or email and password), persisted locally on the device first and structured for future cloud synchronization.
+_Avoid_: Anonymous profile, guest session
 
 **First-run onboarding**:
-The one-time flow shown before the main app on a fresh installation. It introduces Remedin, collects the required local-profile name, explains the core workflow, and offers reminder permissions in dependency order.
+The one-time flow shown after initial authentication on a fresh installation. It presents a Coral-header quick guide of the three core pillars and guides the user through the three essential Android reminder permissions (notifications, exact alarms, and full-screen alarms) followed by a completion summary with optional device hardening (Do Not Disturb and unrestricted battery).
 _Avoid_: Registration, sign-up
 
 **Daily adherence**:

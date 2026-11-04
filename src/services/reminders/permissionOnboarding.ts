@@ -9,8 +9,25 @@ export const ONBOARDING_PERMISSION_STEPS = [
   "battery",
 ] as const;
 
+export const ESSENTIAL_ONBOARDING_PERMISSION_STEPS = [
+  "notifications",
+  "exact",
+  "fullScreen",
+] as const;
+
+export const OPTIONAL_ONBOARDING_PERMISSION_STEPS = [
+  "doNotDisturb",
+  "battery",
+] as const;
+
 export type OnboardingPermissionStep =
   (typeof ONBOARDING_PERMISSION_STEPS)[number];
+
+export type EssentialOnboardingPermissionStep =
+  (typeof ESSENTIAL_ONBOARDING_PERMISSION_STEPS)[number];
+
+export type OptionalOnboardingPermissionStep =
+  (typeof OPTIONAL_ONBOARDING_PERMISSION_STEPS)[number];
 
 export type NotificationOnboardingAction =
   | "request"

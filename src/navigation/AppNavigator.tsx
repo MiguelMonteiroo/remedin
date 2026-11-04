@@ -12,7 +12,7 @@ import { MedicationsScreen } from "../screens/MedicationsScreen";
 import { SettingsScreen } from "../screens/SettingsScreen";
 import { OnboardingScreen } from "../screens/OnboardingScreen";
 import { RootStackParamList, RootTabParamList } from "./types";
-import { colors } from "../theme/colors";
+import { useAppTheme } from "../theme/ThemeProvider";
 import { ptBR } from "../i18n/ptBR";
 import { fontFamilies } from "../theme/typography";
 import { AppText } from "../components/ui/AppText";
@@ -67,16 +67,26 @@ function MainTabs() {
   );
 }
 
-function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
+export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { colors } = useAppTheme();
 
   return (
     <View style={[styles.floatingContainer, { bottom: Math.max(insets.bottom, 16) + 8 }]}>
-      <View style={styles.floatingPill}>
+      <View
+        style={[
+          styles.floatingPill,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+          },
+        ]}
+      >
         {state.routes.map((route, index) => {
           const config = TAB_CONFIG[route.name as keyof RootTabParamList];
           const focused = state.index === index;
           const Icon = config.icon;
+          const itemTint = focused ? colors.primaryDark : colors.textMuted;
 
           return (
             <Pressable
@@ -91,15 +101,15 @@ function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
               }}
               style={({ pressed }) => [
                 styles.navItem,
-                focused && styles.navItemActive,
+                focused && { backgroundColor: colors.primarySoft },
                 pressed && styles.navItemPressed,
               ]}
             >
-              <Icon color={colors.text} size={22} strokeWidth={2.2} />
+              <Icon color={itemTint} size={22} strokeWidth={focused ? 2.5 : 2.1} />
               <AppText
                 allowFontScaling={false}
                 numberOfLines={1}
-                style={styles.navLabel}
+                style={[styles.navLabel, { color: itemTint }]}
                 variant="caption"
                 weight="bold"
               >
@@ -114,6 +124,7 @@ function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
 }
 
 export function AppNavigator() {
+  const { colors } = useAppTheme();
   return (
     <Stack.Navigator
       initialRouteName="MainTabs"
@@ -167,9 +178,9 @@ const styles = StyleSheet.create({
   floatingPill: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    backgroundColor: colors.white,
+    gap: 8,
     borderRadius: 40,
+    borderWidth: 1,
     paddingVertical: 6,
     paddingHorizontal: 8,
     shadowColor: "#000",
@@ -182,21 +193,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 4,
-    paddingVertical: 10,
+    minHeight: 52,
+    paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 30,
   },
-  navItemActive: {
-    backgroundColor: colors.surfaceMuted,
-  },
   navItemPressed: {
-    opacity: 0.7,
+    opacity: 0.75,
   },
   navLabel: {
     fontSize: 11,
     fontWeight: "700",
-    color: colors.text,
     textAlign: "center",
   },
 });
-

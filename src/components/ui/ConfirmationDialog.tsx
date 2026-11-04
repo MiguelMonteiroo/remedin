@@ -9,7 +9,8 @@ import {
 import { AlertTriangle, type LucideIcon } from "lucide-react-native";
 import { AppButton } from "./AppButton";
 import { AppText } from "./AppText";
-import { colors } from "../../theme/colors";
+import { useAppTheme } from "../../theme/ThemeProvider";
+import { type ThemeColors } from "../../theme/theme";
 import { radii } from "../../theme/radii";
 import { spacing } from "../../theme/spacing";
 
@@ -40,6 +41,8 @@ export function ConfirmationDialog({
   variant = "normal",
   busy = false,
 }: Props) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const titleRef = useRef<View>(null);
   const destructive = variant === "destructive";
 
@@ -106,7 +109,7 @@ export function ConfirmationDialog({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   overlay: {
     alignItems: "center",
     backgroundColor: "rgba(37, 32, 24, 0.48)",
@@ -133,6 +136,6 @@ const styles = StyleSheet.create({
   },
   destructiveIconContainer: { backgroundColor: colors.dangerSoft },
   title: { color: colors.primaryDark, marginTop: spacing.lg },
-  description: { marginTop: spacing.sm },
+  description: { color: colors.textMuted, marginTop: spacing.sm },
   actions: { gap: spacing.sm, marginTop: spacing.xl },
 });

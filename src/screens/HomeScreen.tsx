@@ -17,7 +17,8 @@ import { AppButton } from "../components/ui/AppButton";
 import { useAppData } from "../services/appDataProvider";
 import { RootStackParamList, RootTabParamList } from "../navigation/types";
 import { DoseOccurrence } from "../types/domain";
-import { colors } from "../theme/colors";
+import { useAppTheme } from "../theme/ThemeProvider";
+import { type ThemeColors } from "../theme/theme";
 import { radii } from "../theme/radii";
 import { spacing } from "../theme/spacing";
 import { getGreetingForHour, getNextGreetingChange } from "../utils/greeting";
@@ -35,6 +36,8 @@ function getOccurrenceTime(occurrence: DoseOccurrence) {
 }
 
 export function HomeScreen({ navigation }: Props) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const [greeting, setGreeting] = useState(() => getGreetingForHour(new Date().getHours()));
   const [undoingOccurrenceId, setUndoingOccurrenceId] = useState<string | null>(null);
   const undoingOccurrenceRef = useRef<string | null>(null);
@@ -78,18 +81,18 @@ export function HomeScreen({ navigation }: Props) {
 
   if (loading) {
     return (
-      <Screen style={styles.center}>
+      <Screen style={[styles.center, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <AppText muted style={styles.loadingText}>{ptBR.home.loading}</AppText>
+        <AppText muted style={[styles.loadingText, { color: colors.textMuted }]}>{ptBR.home.loading}</AppText>
       </Screen>
     );
   }
 
   if (error) {
     return (
-      <Screen style={styles.center}>
+      <Screen style={[styles.center, { backgroundColor: colors.background }]}>
         <AppText variant="subheading" style={styles.errorText}>{ptBR.home.loadErrorTitle}</AppText>
-        <AppText muted style={styles.centerText}>{ptBR.home.loadErrorMessage}</AppText>
+        <AppText muted style={[styles.centerText, { color: colors.textMuted }]}>{ptBR.home.loadErrorMessage}</AppText>
         <AppButton icon={RefreshCw} onPress={retryLoadingData} title={ptBR.actions.tryAgain} />
       </Screen>
     );
@@ -170,7 +173,7 @@ export function HomeScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen>
+    <Screen style={{ backgroundColor: colors.background }}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <CareHeader
           title={`${greeting}${settings.userName.trim() ? `, ${settings.userName.trim()}` : ""}`}
@@ -180,6 +183,7 @@ export function HomeScreen({ navigation }: Props) {
               : ptBR.home.subtitle
           }
           initials={settings.userName.trim().charAt(0).toUpperCase() || "M"}
+          onAvatarPress={() => navigation.navigate("Profile")}
         />
 
         {presentation.kind === "empty" ? (
@@ -248,29 +252,29 @@ export function HomeScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   center: { alignItems: "center", justifyContent: "center" },
   centerText: { marginBottom: spacing.xl, marginTop: spacing.sm, textAlign: "center" },
   loadingText: { marginTop: spacing.md },
   errorText: { color: colors.danger, textAlign: "center" },
-  content: { paddingBottom: spacing.xxl, gap: spacing.lg },
+  content: { paddingBottom: 124, gap: spacing.lg },
   completeBanner: {
     alignItems: "center",
     backgroundColor: colors.successSoft,
     borderColor: colors.successBorder,
     borderWidth: 1,
-    borderRadius: radii.md,
+    borderRadius: radii.lg,
     flexDirection: "row",
     gap: spacing.md,
-    marginTop: spacing.lg,
+    marginTop: spacing.sm,
     minHeight: 64,
     paddingHorizontal: spacing.lg,
   },
-  completeText: { color: colors.primaryDark, flex: 1 },
+  completeText: { color: colors.success, flex: 1 },
   registeredPanel: {
     backgroundColor: colors.surface,
     borderColor: colors.border,
-    borderRadius: radii.md,
+    borderRadius: radii.lg,
     borderWidth: 1,
     marginBottom: spacing.md,
     overflow: "hidden",

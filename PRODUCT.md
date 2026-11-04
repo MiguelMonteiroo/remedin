@@ -35,6 +35,8 @@ Diferente de aplicativos convencionais com contas em nuvem, assinaturas ou notif
   - *Unrecorded dose* (dose sem registro ao fim do dia).
 
 ## Brand Commitments
+
+> **Revisão de marca em andamento (27/10/2026):** a nova direção acordada preserva o nome Remedin e explora uma pílula como símbolo, sem mascote, com cores e tipografia abertas à revisão. A definição de mascote abaixo descreve a identidade anterior e não é uma restrição para o redesign. Os recursos existentes continuam em uso até a aprovação e implementação da nova identidade. Consulte `design/identidade/briefing.md`.
 - **Nome Oficial**: Remedin.
 - **Identidade da Mascote Canônica (Imutável)**: "Cápsula Companheira" baseada estritamente no asset `assets/mascot-canonical.jpg` (`capsule_solid_bg_2_1787386895140.jpg`).
   - Metade superior em Verde Menta / Sage Suave (`#6ECB98`).

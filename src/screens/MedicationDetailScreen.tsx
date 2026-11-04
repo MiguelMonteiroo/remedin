@@ -13,7 +13,9 @@ import { ConfirmationDialog } from "../components/ui/ConfirmationDialog";
 import { RootStackParamList } from "../navigation/types";
 import { useAppData } from "../services/appDataProvider";
 import { DoseLog } from "../types/domain";
-import { colors } from "../theme/colors";
+import { useAppTheme } from "../theme/ThemeProvider";
+import { type ThemeColors } from "../theme/theme";
+import { radii } from "../theme/radii";
 import { spacing } from "../theme/spacing";
 import { ptBR } from "../i18n/ptBR";
 import { formatHistoryActionDateTime } from "../utils/stats";
@@ -21,6 +23,8 @@ import { formatHistoryActionDateTime } from "../utils/stats";
 type Props = NativeStackScreenProps<RootStackParamList, "MedicationDetail">;
 
 export function MedicationDetailScreen({ route, navigation }: Props) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const { medicationId } = route.params;
@@ -34,7 +38,7 @@ export function MedicationDetailScreen({ route, navigation }: Props) {
 
   if (!medication) {
     return (
-      <Screen style={styles.center}>
+      <Screen style={[styles.center, { backgroundColor: colors.background }]}>
         <AppText variant="subheading" style={styles.errorText}>{ptBR.details.notFound}</AppText>
       </Screen>
     );
@@ -55,11 +59,18 @@ export function MedicationDetailScreen({ route, navigation }: Props) {
   }
 
   return (
-    <Screen>
+    <Screen style={{ backgroundColor: colors.background }}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <IconButton icon={ArrowLeft} label={ptBR.actions.back} onPress={() => navigation.goBack()} />
-          <AppText variant="title" style={styles.title}>{ptBR.details.title}</AppText>
+          <View style={styles.headerText}>
+            <AppText variant="caption" weight="bold" style={styles.eyebrow}>
+              DETALHES DO TRATAMENTO
+            </AppText>
+            <AppText accessibilityRole="header" variant="title" style={styles.title}>
+              {ptBR.details.title}
+            </AppText>
+          </View>
         </View>
 
         <CareDetailHeroCard
@@ -69,23 +80,23 @@ export function MedicationDetailScreen({ route, navigation }: Props) {
           onEdit={() => navigation.navigate("EditMedication", { medicationId })}
         />
 
-        <InfoCard icon={<CalendarDays color={colors.primaryDark} size={23} strokeWidth={2} />} title={ptBR.details.schedule}>
+        <InfoCard icon={<CalendarDays color={colors.primaryDark} size={22} strokeWidth={2.2} />} title={ptBR.details.schedule}>
           {firstSchedule ? (
             <>
               <InfoRow label={ptBR.details.frequency} value={scheduleLabel(firstSchedule.kind)} />
               <InfoRow label={ptBR.details.time} value={firstSchedule.times.join(", ")} strong />
               <InfoRow label={ptBR.details.dosage} value={medication.dosage} />
             </>
-          ) : <AppText muted>{ptBR.details.noActiveTime}</AppText>}
+          ) : <AppText muted style={{ color: colors.textMuted }}>{ptBR.details.noActiveTime}</AppText>}
         </InfoCard>
 
-        <InfoCard icon={<FileText color={colors.info} size={23} strokeWidth={2} />} title={ptBR.details.observations}>
-          <AppText>{medication.notes || ptBR.details.noObservations}</AppText>
+        <InfoCard icon={<FileText color={colors.primaryDark} size={22} strokeWidth={2.2} />} title={ptBR.details.observations}>
+          <AppText style={{ color: colors.text }}>{medication.notes || ptBR.details.noObservations}</AppText>
         </InfoCard>
 
-        <InfoCard icon={<CheckCircle2 color={colors.success} size={23} strokeWidth={2} />} title={ptBR.details.recentHistory}>
+        <InfoCard icon={<CheckCircle2 color={colors.primaryDark} size={22} strokeWidth={2.2} />} title={ptBR.details.recentHistory}>
           {logs.length === 0 ? (
-            <AppText muted>{ptBR.details.noRecentHistory}</AppText>
+            <AppText muted style={{ color: colors.textMuted }}>{ptBR.details.noRecentHistory}</AppText>
           ) : logs.map((log, index) => (
             <View key={log.id} style={[styles.logRow, index < logs.length - 1 && styles.logDivider]}>
               <AppText variant="small" style={styles.logDate}>{formatHistoryActionDateTime(log.actionAt)}</AppText>
@@ -118,11 +129,15 @@ export function MedicationDetailScreen({ route, navigation }: Props) {
 }
 
 function InfoCard({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   return (
-    <AppCard style={styles.card}>
+    <AppCard style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
       <View style={styles.cardHeader}>
-        {icon}
-        <AppText variant="subheading" weight="semibold" style={styles.cardTitle}>{title}</AppText>
+        <View style={styles.cardIconMedallion}>
+          {icon}
+        </View>
+        <AppText variant="subheading" weight="bold" style={styles.cardTitle}>{title}</AppText>
       </View>
       {children}
     </AppCard>
@@ -130,6 +145,8 @@ function InfoCard({ icon, title, children }: { icon: ReactNode; title: string; c
 }
 
 function InfoRow({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   return (
     <View style={styles.infoRow}>
       <AppText variant="small" muted style={styles.infoLabel}>{label}</AppText>
@@ -151,20 +168,36 @@ function actionToStatus(action: DoseLog["action"]) {
   return "undone";
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   center: { alignItems: "center", justifyContent: "center" },
   content: { paddingBottom: spacing.xxl },
   errorText: { color: colors.danger },
   header: { alignItems: "center", flexDirection: "row", marginBottom: spacing.lg },
-  title: { color: colors.primaryDark, flex: 1, marginLeft: spacing.md },
-  card: { marginBottom: spacing.md, padding: spacing.lg },
+  headerText: { flex: 1, marginLeft: spacing.md },
+  eyebrow: {
+    color: colors.primary,
+    letterSpacing: 0.6,
+    marginBottom: 2,
+  },
+  title: { color: colors.primaryDark },
+  card: { borderRadius: radii.lg, marginBottom: spacing.md, padding: spacing.xl },
   cardHeader: { alignItems: "center", borderBottomColor: colors.border, borderBottomWidth: 1, flexDirection: "row", gap: spacing.md, marginBottom: spacing.md, paddingBottom: spacing.md },
-  cardTitle: { flex: 1 },
+  cardIconMedallion: {
+    alignItems: "center",
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.border,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    height: 44,
+    justifyContent: "center",
+    width: 44,
+  },
+  cardTitle: { color: colors.text, flex: 1 },
   infoRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", paddingVertical: spacing.sm },
-  infoLabel: { flex: 1, marginRight: spacing.md },
-  infoValue: { flexShrink: 1, maxWidth: "62%", textAlign: "right" },
+  infoLabel: { color: colors.textMuted, flex: 1, marginRight: spacing.md },
+  infoValue: { color: colors.text, flexShrink: 1, maxWidth: "62%", textAlign: "right" },
   strongValue: { color: colors.primaryDark },
   logRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", minHeight: 60, paddingVertical: spacing.sm },
   logDivider: { borderBottomColor: colors.border, borderBottomWidth: 1 },
-  logDate: { flex: 1, marginRight: spacing.md },
+  logDate: { color: colors.text, flex: 1, marginRight: spacing.md },
 });
