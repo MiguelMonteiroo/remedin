@@ -29,6 +29,8 @@ Os HTMLs em `preview/` e os ADRs registram etapas do projeto. Para alterar a exp
 
 ## Bancada de testes
 
+O [workflow de CI](.github/workflows/ci.yml) instala as dependências com o lockfile, checa o TypeScript e roda o Jest em cada pull request.
+
 ```sh
 npm run typecheck
 npm test -- --runInBand --detectOpenHandles
