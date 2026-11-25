@@ -1,6 +1,7 @@
 import { Pressable, PressableProps, StyleSheet } from "react-native";
 import { LucideIcon } from "lucide-react-native";
-import { colors } from "../../theme/colors";
+import { useAppTheme } from "../../theme/ThemeProvider";
+import { type ThemeColors } from "../../theme/theme";
 import { radii } from "../../theme/radii";
 
 type Props = PressableProps & {
@@ -9,6 +10,8 @@ type Props = PressableProps & {
 };
 
 export function IconButton({ icon: Icon, label, ...props }: Props) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   return (
     <Pressable
       {...props}
@@ -21,7 +24,7 @@ export function IconButton({ icon: Icon, label, ...props }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   button: {
     alignItems: "center",
     backgroundColor: colors.primarySoft,

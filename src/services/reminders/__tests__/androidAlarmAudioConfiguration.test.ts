@@ -32,7 +32,9 @@ describe("native alarm audio configuration", () => {
     expect(service).toContain("isLooping = true");
     expect(service).toContain("startForeground(");
     expect(service).toContain("ALARM_TIMEOUT_MS");
-    expect(service).toContain("setFullScreenIntent(");
+    expect(service).toContain(".setGroup(ACTIVE_ALARM_GROUP)");
+    expect(service).toContain("if (canLaunchFullScreen(primary))");
+    expect(service).toContain("builder.setFullScreenIntent(activityPendingIntent, true)");
     expect(service).toContain('"Marcar como tomado"');
     expect(service).toContain('"Adiar 5 min"');
     expect(service).toContain("stopForeground(STOP_FOREGROUND_REMOVE)");

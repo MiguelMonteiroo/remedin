@@ -1,6 +1,9 @@
 import React from "react";
 // @ts-expect-error react-test-renderer does not ship declarations in this project.
 import TestRenderer, { act } from "react-test-renderer";
+import { AppThemeProvider } from "../../theme/ThemeProvider";
+import { StyleSheet, useColorScheme } from "react-native";
+import { themes } from "../../theme/theme";
 import {
   MedicationFormScreen,
   type MedicationFormValues,
@@ -17,6 +20,15 @@ const INITIAL_VALUES: MedicationFormValues = {
 };
 
 describe("MedicationFormScreen", () => {
+  it("uses a dark input surface when the system is dark", async () => {
+    jest.spyOn(require("react-native"), "useColorScheme").mockReturnValue("dark");
+    let renderer!: ReturnType<typeof TestRenderer.create>;
+    await act(async () => { renderer = TestRenderer.create(<AppThemeProvider><MedicationFormScreen initialValues={INITIAL_VALUES} mode="add" onBack={jest.fn()} onSubmit={jest.fn()} /></AppThemeProvider>); });
+    const input = renderer.root.findByProps({ accessibilityLabel: "Nome do medicamento" });
+    expect(StyleSheet.flatten(input.props.style).backgroundColor).toBe(themes.dark.surface);
+    await act(async () => renderer.unmount());
+    jest.restoreAllMocks();
+  });
   it("submits only once when the save action is pressed twice quickly", async () => {
     let finishSaving!: () => void;
     const pendingSave = new Promise<void>((resolve) => {
@@ -28,12 +40,12 @@ describe("MedicationFormScreen", () => {
 
     await act(async () => {
       renderer = TestRenderer.create(
-        <MedicationFormScreen
+        <AppThemeProvider><MedicationFormScreen
           initialValues={INITIAL_VALUES}
           mode="add"
           onBack={onBack}
           onSubmit={onSubmit}
-        />
+        /></AppThemeProvider>
       );
     });
 

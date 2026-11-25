@@ -1,6 +1,6 @@
 import type { NativeDB } from "./nativeDb";
 
-const DATABASE_VERSION = 3;
+const DATABASE_VERSION = 4;
 
 async function tableHasColumn(
   db: NativeDB,
@@ -221,7 +221,27 @@ export async function migrateDbIfNeeded(db: NativeDB) {
       currentVersion = 3;
     }
 
+    if (currentVersion === 3) {
+      await transaction.execAsync(`
+        PRAGMA secure_delete = ON;
+        INSERT OR REPLACE INTO app_settings (key, value)
+        SELECT 'userName', TRIM(value)
+        FROM app_settings
+        WHERE key = 'authName' AND TRIM(value) <> ''
+          AND NOT EXISTS (
+            SELECT 1 FROM app_settings WHERE key = 'userName' AND TRIM(value) <> ''
+          );
+
+        DELETE FROM app_settings
+        WHERE key IN (
+          'authAuthenticated', 'authName', 'authEmail', 'authProvider', 'authAccountsJson'
+        );
+      `);
+    }
+
     await assertForeignKeyIntegrity(transaction);
     await transaction.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
   });
+
+  await db.execAsync("PRAGMA wal_checkpoint(TRUNCATE)");
 }

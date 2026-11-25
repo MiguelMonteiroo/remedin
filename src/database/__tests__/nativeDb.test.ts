@@ -1,6 +1,28 @@
 import { createTestDatabase } from "../testing/testDatabase";
 
 describe("native database transaction queue", () => {
+  it("recovers from failed writes in a burst of 512 transactions", async () => {
+    const { db, close } = createTestDatabase();
+    try {
+      await db.execAsync("CREATE TABLE writes (id INTEGER PRIMARY KEY)");
+      const writes = Array.from({ length: 512 }, (_, index) =>
+        db.withTransactionAsync(async (transaction) => {
+          await transaction.runAsync("INSERT INTO writes VALUES (?)", index);
+          if (index % 8 === 0) throw new Error("Simulated write failure");
+        })
+      );
+      const settled = await Promise.allSettled(writes);
+      const rows = await db.getAllAsync<{ id: number }>("SELECT id FROM writes ORDER BY id");
+
+      expect(settled.filter(({ status }) => status === "rejected")).toHaveLength(64);
+      expect(rows.map(({ id }) => id)).toEqual(
+        Array.from({ length: 512 }, (_, index) => index).filter((index) => index % 8 !== 0)
+      );
+    } finally {
+      close();
+    }
+  });
+
   it("serializes transactions and outside operations on one connection", async () => {
     const { db, close } = createTestDatabase();
 

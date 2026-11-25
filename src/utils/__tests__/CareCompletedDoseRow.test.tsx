@@ -1,6 +1,7 @@
 import React from "react";
 // @ts-expect-error react-test-renderer does not ship declarations in this project.
 import TestRenderer, { act } from "react-test-renderer";
+import { AppThemeProvider } from "../../theme/ThemeProvider";
 import { CareCompletedDoseRow } from "../../components/CareCompletedDoseRow";
 
 describe("CareCompletedDoseRow", () => {
@@ -10,12 +11,12 @@ describe("CareCompletedDoseRow", () => {
 
     await act(async () => {
       renderer = TestRenderer.create(
-        <CareCompletedDoseRow
+        <AppThemeProvider><CareCompletedDoseRow
           name="Dipirona"
           onUndo={onUndo}
           status="skipped"
           time="08:00"
-        />
+        /></AppThemeProvider>
       );
     });
 
@@ -27,13 +28,13 @@ describe("CareCompletedDoseRow", () => {
 
     await act(async () => {
       renderer.update(
-        <CareCompletedDoseRow
+        <AppThemeProvider><CareCompletedDoseRow
           name="Dipirona"
           onUndo={onUndo}
           status="skipped"
           time="08:00"
           undoing
-        />
+        /></AppThemeProvider>
       );
     });
     expect(
@@ -49,7 +50,7 @@ describe("CareCompletedDoseRow", () => {
 
     await act(async () => {
       renderer = TestRenderer.create(
-        <CareCompletedDoseRow name="Dipirona" status="taken" time="08:00" />
+        <AppThemeProvider><CareCompletedDoseRow name="Dipirona" status="taken" time="08:00" /></AppThemeProvider>
       );
     });
 

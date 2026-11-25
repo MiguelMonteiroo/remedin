@@ -44,6 +44,16 @@ yarn-error.*
 /ios/build
 /ios/Pods
 
+# Android Studio & Local Machine files
+android/local.properties
+android/.idea/
+.idea/
+*.iml
+
+# Pastas de referências locais e explorações
+referencias/
+design/
+
 # local tooling artifacts
 *opencodediff*.txt
 
@@ -51,3 +61,10 @@ yarn-error.*
 /AGENTS.md
 /CLAUDE.md
 /roadmap/
+docs/superpowers/
+.agents/
+.claude/
+.claude-flow/
+.impeccable/
+.swarm/
+stitch-imports/

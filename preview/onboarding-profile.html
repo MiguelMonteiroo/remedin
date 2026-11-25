@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Remedin — Perfil</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --green-primary:   #0F6B3A;
+      --green-shadow:    #0A4D29;
+      --green-menta:     #6ECB98;
+      --cream:           #FDFBF7; /* Fundo limpo e suave */
+      --cream-input:     #FFFFFF; /* Contraste sutil pro input */
+      --text-dark:       #14120E;
+      --text-muted:      #6A655C;
+      --text-placeholder:#A89F95;
+      --border-idle:     #E2D9CC;
+      --border-focus:    #0F6B3A;
+      --font: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0A0F14;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100dvh;
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+      padding: 24px 16px;
+    }
+
+    /* ─── PHONE SHELL ─────────────────────────────────── */
+    .phone {
+      width: 390px;
+      height: 844px;
+      border-radius: 54px;
+      overflow: hidden;
+      position: relative;
+      box-shadow:
+        0 0 0 10px #1c2733,
+        0 0 0 12px #111a23,
+        0 48px 120px rgba(0,0,0,0.65);
+      background: var(--cream);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ─── TOP NAV (Adaptado para fundo claro) ─────────── */
+    .nav-top {
+      padding: 56px 24px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 20;
+    }
+
+    .nav-btn-icon {
+      width: 44px; height: 44px;
+      border-radius: 22px;
+      background: rgba(0,0,0,0.04);
+      border: 1px solid rgba(0,0,0,0.03);
+      color: var(--text-dark);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    .nav-btn-icon:active { transform: scale(0.92); background: rgba(0,0,0,0.08); }
+
+    .step-label {
+      background: rgba(0,0,0,0.04);
+      border: 1px solid rgba(0,0,0,0.03);
+      color: var(--text-muted);
+      font-size: 13px; font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 20px;
+      letter-spacing: 0.01em;
+    }
+
+    .nav-spacer { width: 44px; }
+
+    /* ─── LAYOUT CENTRAL / CONTENT ────────────────────── */
+    .main-content {
+      flex: 1;
+      padding: 32px 24px 40px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ─── HEADLINE ────────────────────────────────────── */
+    .header-area {
+      margin-top: 40px; /* Respiro extra do topo para centralizar a atenção */
+      margin-bottom: 40px;
+    }
+
+    .eyebrow {
+      color: var(--green-primary);
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+      display: inline-block;
+    }
+
+    .headline {
+      font-size: 34px;
+      font-weight: 900;
+      color: var(--text-dark);
+      line-height: 1.1;
+      letter-spacing: -0.04em;
+      text-wrap: balance;
+    }
+
+    /* ─── INPUT FIELD (Soft Skill / Premium) ──────────── */
+    .input-wrap {
+      position: relative;
+      width: 100%;
+      margin-bottom: 12px;
+    }
+
+    .input-label {
+      position: absolute;
+      top: 50%;
+      left: 20px;
+      transform: translateY(-50%);
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-placeholder);
+      pointer-events: none;
+      transition:
+        top 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+        font-size 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+        color 0.2s ease,
+        transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+      background: transparent;
+      padding: 0 4px;
+    }
+
+    /* Label flutuante quando input tem foco ou valor */
+    .input-field:focus + .input-label,
+    .input-field.has-value + .input-label {
+      top: 0px;
+      transform: translateY(-50%);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--green-primary);
+      background: var(--cream-input);
+      padding: 0 6px;
+      left: 14px;
+    }
+
+    .input-field {
+      width: 100%;
+      height: 64px; /* Campo mais alto, generoso */
+      background: var(--cream-input);
+      border: 2px solid var(--border-idle);
+      border-radius: 20px;
+      padding: 0 20px;
+      padding-top: 8px; /* Espaço para o label flutuar visualmente equilibrado */
+      font-family: var(--font);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-dark);
+      outline: none;
+      caret-color: var(--green-primary);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+      letter-spacing: -0.01em;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.01);
+    }
+
+    .input-field:focus {
+      border-color: var(--border-focus);
+      background: #FFFFFF;
+      /* Soft Glow Premium */
+      box-shadow: 0 0 0 4px rgba(15, 107, 58, 0.12), 0 8px 24px rgba(0,0,0,0.04);
+    }
+
+    /* Contador de caracteres */
+    .char-counter {
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-placeholder);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .char-counter.visible { opacity: 1; }
+
+    /* ─── PRIVACY CHIP ────────────────────────────────── */
+    .privacy-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 0 4px;
+    }
+
+    /* ─── CTA BUTTON ──────────────────────────────────── */
+    .cta-area {
+      width: 100%;
+      margin-top: auto; /* Empurra o botão pro rodapé */
+      padding-top: 24px;
+    }
+
+    .btn-chunky {
+      width: 100%;
+      height: 64px;
+      background: var(--green-primary);
+      border: none;
+      border-radius: 20px;
+      color: #FFF;
+      font-family: var(--font);
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      box-shadow: 0 6px 0 var(--green-shadow);
+      transition:
+        transform 0.1s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow 0.1s cubic-bezier(0.4, 0, 0.2, 1),
+        background 0.25s ease,
+        filter 0.15s ease;
+    }
+
+    /* Estado desabilitado */
+    .btn-chunky.disabled {
+      background: #E3DCD3;
+      box-shadow: 0 6px 0 #CFC6BA;
+      color: #9C948A;
+      cursor: default;
+      filter: none;
+    }
+
+    .btn-chunky:not(.disabled):hover   { filter: brightness(1.06); }
+    .btn-chunky:not(.disabled):active  {
+      transform: translateY(6px);
+      box-shadow: 0 0 0 var(--green-shadow);
+    }
+
+    /* ─── SUCCESS OVERLAY ─────────────────────────────── */
+    .success-overlay {
+      position: absolute; inset: 0;
+      background: var(--green-primary);
+      z-index: 100;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 16px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    .success-overlay.visible { opacity: 1; pointer-events: auto; }
+
+    .success-name {
+      font-size: 14px; font-weight: 700;
+      color: rgba(255,255,255,0.8);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .success-greeting {
+      font-size: 36px; font-weight: 900;
+      color: #FFF;
+      letter-spacing: -0.04em;
+      text-align: center;
+      padding: 0 32px;
+      text-wrap: balance;
+    }
+    .success-icon {
+      width: 72px; height: 72px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 36px;
+      display: flex; align-items: center; justify-content: center;
+      animation: successPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes successPop {
+      0%   { transform: scale(0.3); opacity: 0; }
+      100% { transform: scale(1);   opacity: 1; }
+    }
+
+    .preview-label {
+      color: #4A5D70; font-size: 12px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin-top: 28px; text-align: center; opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div style="display:flex;flex-direction:column;align-items:center;">
+    <div class="phone">
+
+      <!-- SUCCESS OVERLAY -->
+      <div id="success-overlay" class="success-overlay">
+        <div class="success-icon">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 13l4 4L19 7"/>
+          </svg>
+        </div>
+        <span class="success-name">Olá,</span>
+        <p id="success-greeting" class="success-greeting">Que bom ter você aqui!</p>
+      </div>
+
+      <!-- TOP NAV -->
+      <nav class="nav-top">
+        <button class="nav-btn-icon" onclick="history.back()" aria-label="Voltar">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+
+        <span class="step-label">Passo 1 de 1</span>
+
+        <div class="nav-spacer"></div>
+      </nav>
+
+      <!-- MAIN CONTENT -->
+      <main class="main-content">
+        
+        <div class="header-area">
+          <span class="eyebrow">Primeiro Acesso</span>
+          <h1 class="headline">Como podemos chamar você?</h1>
+        </div>
+
+        <!-- Input Field com Soft Focus -->
+        <div class="input-wrap">
+          <input
+            id="name-input"
+            class="input-field"
+            type="text"
+            maxlength="30"
+            autocomplete="given-name"
+            autocapitalize="words"
+            spellcheck="false"
+            oninput="handleInput(this)"
+            onkeydown="handleKeydown(event)"
+            aria-label="Seu nome"
+          />
+          <label class="input-label" for="name-input">Seu nome</label>
+          <span id="char-counter" class="char-counter">0/30</span>
+        </div>
+
+        <!-- Privacy chip -->
+        <div class="privacy-chip">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="5" y="11" width="14" height="10" rx="2"/>
+            <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+          </svg>
+          Seu nome fica apenas neste aparelho.
+        </div>
+
+        <!-- CTA Empurrado para baixo -->
+        <div class="cta-area">
+          <button id="btn-continue" class="btn-chunky disabled" onclick="handleContinue()" aria-label="Continuar">
+            <span id="btn-label">Digite seu nome</span>
+          </button>
+        </div>
+
+      </main>
+
+    </div>
+    <p class="preview-label">Remedin · Perfil · Minimalist UI</p>
+  </div>
+
+  <script>
+    const input     = document.getElementById('name-input');
+    const btn       = document.getElementById('btn-continue');
+    const btnLabel  = document.getElementById('btn-label');
+    const counter   = document.getElementById('char-counter');
+    const overlay   = document.getElementById('success-overlay');
+    const greeting  = document.getElementById('success-greeting');
+
+    const ARROW_SVG = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`;
+
+    function isValid(name) {
+      return name.trim().length >= 2;
+    }
+
+    function handleInput(el) {
+      const val = el.value;
+      const trimmed = val.trim();
+      const len = val.length;
+
+      /* Ativa label flutuante */
+      el.classList.toggle('has-value', len > 0);
+
+      /* Contador */
+      counter.textContent = `${len}/30`;
+      counter.classList.toggle('visible', len > 0);
+
+      /* Estado do botão inteligente */
+      if (isValid(trimmed)) {
+        btn.classList.remove('disabled');
+        btnLabel.innerHTML = `Continuar ${ARROW_SVG}`;
+        btn.style.removeProperty('cursor');
+      } else {
+        btn.classList.add('disabled');
+        btnLabel.innerHTML = len === 0 ? 'Digite seu nome' : 'Nome muito curto';
+        btn.style.cursor = 'default';
+      }
+    }
+
+    function handleKeydown(e) {
+      if (e.key === 'Enter') handleContinue();
+    }
+
+    function handleContinue() {
+      if (btn.classList.contains('disabled')) return;
+      const name = input.value.trim();
+      if (!isValid(name)) return;
+
+      const firstName = name.split(' ')[0];
+      greeting.textContent = `Que bom ter você aqui, ${firstName}!`;
+
+      overlay.classList.add('visible');
+      input.blur();
+
+      /* Reset da demo */
+      setTimeout(() => {
+        overlay.classList.remove('visible');
+        input.value = '';
+        input.classList.remove('has-value');
+        counter.classList.remove('visible');
+        btn.classList.add('disabled');
+        btnLabel.innerHTML = 'Digite seu nome';
+      }, 2500);
+    }
+
+    /* Auto-focus dramático */
+    setTimeout(() => input.focus(), 600);
+  </script>
+</body>
+</html>

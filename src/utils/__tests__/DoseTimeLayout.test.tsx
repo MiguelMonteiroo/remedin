@@ -3,6 +3,7 @@ import React from "react";
 import TestRenderer, { act } from "react-test-renderer";
 import { CareDoseActionCard } from "../../components/CareDoseActionCard";
 import { CareNextDoseCard } from "../../components/CareNextDoseCard";
+import { AppThemeProvider } from "../../theme/ThemeProvider";
 
 describe("dose time layout", () => {
   it.each([
@@ -23,7 +24,7 @@ describe("dose time layout", () => {
     let renderer!: ReturnType<typeof TestRenderer.create>;
 
     await act(async () => {
-      renderer = TestRenderer.create(component);
+      renderer = TestRenderer.create(<AppThemeProvider>{component}</AppThemeProvider>);
     });
 
     const time = renderer.root.find(

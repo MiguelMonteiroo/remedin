@@ -1,7 +1,8 @@
 import { Pressable, StyleSheet, View } from "react-native";
-import { Clock3, SkipForward } from "lucide-react-native";
+import { Check, Clock3, SkipForward } from "lucide-react-native";
 import { AppText } from "./ui/AppText";
-import { colors } from "../theme/colors";
+import { useAppTheme } from "../theme/ThemeProvider";
+import { type ThemeColors } from "../theme/theme";
 import { radii } from "../theme/radii";
 import { spacing } from "../theme/spacing";
 
@@ -26,145 +27,179 @@ export function CareDoseActionCard({
   onSkip,
   onPress,
 }: Props) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
+  const hasSecondaryActions = Boolean(onSnooze || onSkip);
+
   return (
-    <View style={styles.container}>
-      <View style={styles.main}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Ver detalhes de ${name}`}
-          onPress={onPress}
-          style={styles.detailsArea}
-        >
-          <View style={styles.timePane}>
-            <AppText
-              ellipsizeMode="clip"
-              numberOfLines={1}
-              variant="subheading"
-              style={styles.time}
-            >
-              {time}
-            </AppText>
-          </View>
-          <View style={styles.info}>
-            <AppText variant="small" weight="bold" style={styles.name}>{name}</AppText>
-            <AppText variant="small" muted>
-              {dosage || "Dose programada"}
-            </AppText>
-          </View>
-        </Pressable>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Ver detalhes de ${name}`}
+      onPress={onPress}
+      style={({ pressed }) => [styles.container, pressed && styles.pressed]}
+    >
+      <View style={styles.mainRow}>
+        <View style={styles.iconBox}>
+          <AppText
+            ellipsizeMode="clip"
+            numberOfLines={1}
+            variant="subheading"
+            weight="bold"
+            style={styles.iconTime}
+          >
+            {time}
+          </AppText>
+        </View>
+
+        <View style={styles.info}>
+          <AppText variant="heading" weight="bold" style={styles.name}>
+            {name}
+          </AppText>
+          <AppText variant="subheading" style={styles.dosage}>
+            {dosage || "Dose programada"}
+          </AppText>
+        </View>
+
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Marcar dose como tomada"
           onPress={onTake}
           style={({ pressed }) => [styles.takeButton, pressed && styles.pressed]}
         >
-          <AppText variant="small" weight="bold" style={styles.takeText}>Tomar</AppText>
+          <Check color={colors.onPrimary} size={18} strokeWidth={2.6} />
+          <AppText variant="small" weight="bold" style={styles.takeText}>
+            Tomar
+          </AppText>
         </Pressable>
       </View>
 
-      <View style={styles.secondaryActions}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`Adiar dose por ${snoozeMinutes} minutos`}
-          onPress={onSnooze}
-          style={styles.secondaryButton}
-        >
-          <Clock3 color={colors.primaryDark} size={19} strokeWidth={2} />
-          <AppText variant="small" style={styles.secondaryText}>
-            Adiar {snoozeMinutes} min
-          </AppText>
-        </Pressable>
-        <View style={styles.divider} />
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Pular dose"
-          onPress={onSkip}
-          style={styles.secondaryButton}
-        >
-          <SkipForward color={colors.primaryDark} size={19} strokeWidth={2} />
-          <AppText variant="small" style={styles.secondaryText}>
-            Pular dose
-          </AppText>
-        </Pressable>
-      </View>
-    </View>
+      {hasSecondaryActions ? (
+        <View style={styles.secondaryRow}>
+          {onSnooze ? (
+            <Pressable
+              accessibilityLabel={`Adiar dose de ${name} por ${snoozeMinutes} minutos`}
+              accessibilityRole="button"
+              onPress={onSnooze}
+              style={({ pressed }) => [
+                styles.secondaryPill,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Clock3 color={colors.primaryDark} size={16} strokeWidth={2.2} />
+              <AppText variant="caption" weight="bold" style={styles.secondaryPillText}>
+                Adiar {snoozeMinutes} min
+              </AppText>
+            </Pressable>
+          ) : null}
+
+          {onSkip ? (
+            <Pressable
+              accessibilityLabel={`Pular dose de ${name}`}
+              accessibilityRole="button"
+              onPress={onSkip}
+              style={({ pressed }) => [
+                styles.secondaryPill,
+                pressed && styles.pressed,
+              ]}
+            >
+              <SkipForward color={colors.textMuted} size={16} strokeWidth={2.2} />
+              <AppText variant="caption" weight="bold" style={styles.skipPillText}>
+                Pular
+              </AppText>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
+    </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    marginBottom: spacing.md,
-    overflow: "hidden",
-  },
-  main: {
-    alignItems: "center",
-    flexDirection: "row",
-    minHeight: 88,
-  },
-  detailsArea: {
-    alignItems: "center",
-    flex: 1,
-    flexDirection: "row",
-    minHeight: 88,
-  },
-  timePane: {
-    alignItems: "center",
-    alignSelf: "stretch",
-    backgroundColor: colors.accentSoft,
-    justifyContent: "center",
-    paddingHorizontal: spacing.md,
-    flexShrink: 0,
-    width: 108,
-  },
-  time: {
-    color: colors.accent,
-    fontVariant: ["tabular-nums"],
-    textAlign: "center",
-    width: "100%",
-  },
-  info: {
-    flex: 1,
-    paddingHorizontal: spacing.md,
-  },
-  name: {
-  },
-  takeButton: {
-    alignItems: "center",
-    backgroundColor: colors.primary,
-    borderRadius: radii.sm,
-    justifyContent: "center",
-    marginRight: spacing.md,
-    minHeight: 52,
-    paddingHorizontal: spacing.lg,
-  },
-  takeText: {
-    color: colors.white,
-  },
-  secondaryActions: {
-    borderTopColor: colors.border,
-    borderTopWidth: 1,
-    flexDirection: "row",
-    minHeight: 52,
-  },
-  secondaryButton: {
-    alignItems: "center",
-    flex: 1,
-    flexDirection: "row",
-    gap: spacing.sm,
-    justifyContent: "center",
-  },
-  secondaryText: {
-    color: colors.primaryDark,
-  },
-  divider: {
-    backgroundColor: colors.border,
-    width: 1,
-  },
-  pressed: {
-    opacity: 0.8,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radii.lg,
+      borderWidth: 1,
+      padding: spacing.lg,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.03,
+      shadowRadius: 8,
+      elevation: 1,
+    },
+    mainRow: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: spacing.md,
+    },
+    iconBox: {
+      alignItems: "center",
+      backgroundColor: colors.primarySoft,
+      borderColor: colors.border,
+      borderRadius: radii.md,
+      borderWidth: 1,
+      height: 58,
+      justifyContent: "center",
+      minWidth: 64,
+      paddingHorizontal: spacing.xs,
+    },
+    iconTime: {
+      color: colors.primaryDark,
+      fontVariant: ["tabular-nums"],
+    },
+    info: {
+      flex: 1,
+      justifyContent: "center",
+    },
+    name: {
+      color: colors.text,
+    },
+    dosage: {
+      color: colors.textMuted,
+      marginTop: 2,
+    },
+    takeButton: {
+      alignItems: "center",
+      backgroundColor: colors.primary,
+      borderRadius: radii.pill,
+      flexDirection: "row",
+      gap: 6,
+      minHeight: 48,
+      justifyContent: "center",
+      paddingHorizontal: spacing.lg,
+    },
+    takeText: {
+      color: colors.onPrimary,
+    },
+    secondaryRow: {
+      borderTopColor: colors.border,
+      borderTopWidth: 1,
+      flexDirection: "row",
+      gap: spacing.sm,
+      marginTop: spacing.md,
+      paddingTop: spacing.md,
+    },
+    secondaryPill: {
+      alignItems: "center",
+      backgroundColor: colors.background,
+      borderColor: colors.border,
+      borderRadius: radii.pill,
+      borderWidth: 1,
+      flex: 1,
+      flexDirection: "row",
+      gap: 6,
+      justifyContent: "center",
+      minHeight: 44,
+      paddingHorizontal: spacing.md,
+    },
+    secondaryPillText: {
+      color: colors.primaryDark,
+    },
+    skipPillText: {
+      color: colors.textMuted,
+    },
+    pressed: {
+      opacity: 0.8,
+    },
+  });

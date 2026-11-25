@@ -1,6 +1,8 @@
 import {
+  ESSENTIAL_ONBOARDING_PERMISSION_STEPS,
   getNotificationOnboardingAction,
   ONBOARDING_PERMISSION_STEPS,
+  OPTIONAL_ONBOARDING_PERMISSION_STEPS,
 } from "../permissionOnboarding";
 
 describe("permission onboarding", () => {
@@ -11,6 +13,18 @@ describe("permission onboarding", () => {
       "doNotDisturb",
       "exact",
       "fullScreen",
+      "battery",
+    ]);
+  });
+
+  it("defines the 3 essential first-run steps and 2 optional hardening steps", () => {
+    expect(ESSENTIAL_ONBOARDING_PERMISSION_STEPS).toEqual([
+      "notifications",
+      "exact",
+      "fullScreen",
+    ]);
+    expect(OPTIONAL_ONBOARDING_PERMISSION_STEPS).toEqual([
+      "doNotDisturb",
       "battery",
     ]);
   });

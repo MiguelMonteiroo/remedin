@@ -1,7 +1,8 @@
 import { Pressable, StyleSheet, View } from "react-native";
 import { Minus, Plus } from "lucide-react-native";
 import { AppText } from "./ui/AppText";
-import { colors } from "../theme/colors";
+import { useAppTheme } from "../theme/ThemeProvider";
+import { type ThemeColors } from "../theme/theme";
 import { radii } from "../theme/radii";
 import { spacing } from "../theme/spacing";
 
@@ -15,6 +16,8 @@ const MAX_INTERVAL = 24;
 const QUICK_INTERVALS = [4, 6, 8, 12];
 
 export function IntervalHoursPicker({ value, onChange }: Props) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const safeValue = clampInterval(value);
 
   function update(nextValue: number) {
@@ -38,7 +41,7 @@ export function IntervalHoursPicker({ value, onChange }: Props) {
           <AppText variant="title" weight="bold" style={styles.value}>
             {safeValue}
           </AppText>
-          <AppText variant="small" muted>
+          <AppText variant="small" muted style={{ color: colors.textMuted }}>
             {safeValue === 1 ? "hora" : "horas"}
           </AppText>
         </View>
@@ -89,6 +92,8 @@ type StepButtonProps = {
 };
 
 function StepButton({ label, disabled, onPress, icon: Icon }: StepButtonProps) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   return (
     <Pressable
       accessibilityRole="button"
@@ -111,13 +116,13 @@ function clampInterval(value: number) {
   return Math.min(MAX_INTERVAL, Math.max(MIN_INTERVAL, Math.round(value)));
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     marginBottom: spacing.sm,
   },
   stepper: {
     alignItems: "center",
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderColor: colors.controlBorder,
     borderRadius: radii.md,
     borderWidth: 1,
@@ -172,7 +177,7 @@ const styles = StyleSheet.create({
     borderColor: colors.accentSelectionBorder,
   },
   quickText: {
-    color: colors.primary,
+    color: colors.primaryDark,
   },
   quickTextActive: {
     color: colors.primaryDark,

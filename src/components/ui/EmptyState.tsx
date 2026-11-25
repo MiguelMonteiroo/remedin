@@ -2,7 +2,8 @@ import { StyleSheet, View } from "react-native";
 import { LucideIcon } from "lucide-react-native";
 import { AppText } from "./AppText";
 import { AppButton } from "./AppButton";
-import { colors } from "../../theme/colors";
+import { useAppTheme } from "../../theme/ThemeProvider";
+import { type ThemeColors } from "../../theme/theme";
 import { radii } from "../../theme/radii";
 import { spacing } from "../../theme/spacing";
 
@@ -25,14 +26,16 @@ export function EmptyState({
   onAction,
   illustration,
 }: Props) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   return (
     <View style={styles.container}>
       {illustration ?? (
         <View style={styles.iconWrap}>
-          <Icon color={colors.primary} size={32} strokeWidth={2} />
+          <Icon color={colors.primaryDark} size={32} strokeWidth={2} />
         </View>
       )}
-      <AppText variant="subheading" style={styles.title}>
+      <AppText variant="subheading" weight="bold" style={styles.title}>
         {title}
       </AppText>
       <AppText muted style={styles.message}>
@@ -51,34 +54,37 @@ export function EmptyState({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    alignItems: "center",
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.xxl,
-  },
-  iconWrap: {
-    alignItems: "center",
-    backgroundColor: colors.primarySoft,
-    borderRadius: radii.md,
-    height: 56,
-    justifyContent: "center",
-    marginBottom: spacing.md,
-    width: 56,
-  },
-  title: {
-    textAlign: "center",
-  },
-  message: {
-    marginTop: spacing.sm,
-    textAlign: "center",
-  },
-  action: {
-    marginTop: spacing.xl,
-    width: "100%",
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      alignItems: "center",
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderRadius: radii.lg,
+      borderWidth: 1,
+      paddingHorizontal: spacing.xl,
+      paddingVertical: spacing.xxl,
+    },
+    iconWrap: {
+      alignItems: "center",
+      backgroundColor: colors.primarySoft,
+      borderRadius: radii.md,
+      height: 60,
+      justifyContent: "center",
+      marginBottom: spacing.md,
+      width: 60,
+    },
+    title: {
+      color: colors.text,
+      textAlign: "center",
+    },
+    message: {
+      color: colors.textMuted,
+      marginTop: spacing.sm,
+      textAlign: "center",
+    },
+    action: {
+      marginTop: spacing.xl,
+      width: "100%",
+    },
+  });

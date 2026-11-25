@@ -6,6 +6,7 @@ import type { DoseLogRepository } from "../database/repositories/doseLogReposito
 import type { SettingsRepository } from "../database/repositories/settingsRepository";
 import {
   generateDoseOccurrencesForDate,
+  indexLatestDoseLogs,
   resolveDoseOccurrence,
 } from "../utils/doseEngine";
 import type { ReminderScheduler } from "./reminderScheduler";
@@ -13,12 +14,7 @@ import { getNotificationPermissionStatus } from "./notificationPermissionService
 import { planOccurrenceReminders } from "./reminders/reminderPlanner";
 import type { PlannedReminder } from "./reminders/reminderPlanner";
 import type { ReminderArtifact } from "../types/domain";
-
-function formatDateString(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
-    date.getDate()
-  ).padStart(2, "0")}`;
-}
+import { formatLocalDate } from "../utils/dateTime";
 
 function addDays(date: Date, days: number): Date {
   const next = new Date(date);
@@ -95,8 +91,10 @@ export async function reconcileNotifications(
 
   const medications = await medicationRepo.getAll();
   const schedules = await scheduleRepo.getAll();
-  const doseLogs = await doseLogRepo.getAll();
+  const latestDoseLogs = indexLatestDoseLogs(await doseLogRepo.getAll());
   const horizon = now + 48 * 60 * 60 * 1000;
+  const referenceTime = new Date(now);
+  const today = formatLocalDate(referenceTime);
   let recreated = 0;
 
   for (const medication of medications) {
@@ -106,11 +104,11 @@ export async function reconcileNotifications(
     );
 
     for (const schedule of medicationSchedules) {
-      const occurrences = Array.from({ length: 3 }, (_, index) =>
+      const occurrences = Array.from({ length: 4 }, (_, index) =>
         generateDoseOccurrencesForDate(
           medication,
           schedule,
-          formatDateString(addDays(new Date(), index))
+          formatLocalDate(addDays(referenceTime, index - 1))
         )
       )
         .flat();
@@ -118,9 +116,10 @@ export async function reconcileNotifications(
       for (const originalOccurrence of occurrences) {
         const { occurrence } = resolveDoseOccurrence(
           originalOccurrence,
-          doseLogs,
-          new Date(now)
+          latestDoseLogs,
+          referenceTime
         );
+        if (originalOccurrence.scheduledAt.slice(0, 10) < today && occurrence.status !== "snoozed") continue;
         let artifacts = await artifactRepo.getByDoseOccurrenceId(occurrence.id);
         if (occurrence.status === "taken" || occurrence.status === "skipped") {
           if (artifacts.length > 0) {
@@ -138,7 +137,7 @@ export async function reconcileNotifications(
           : {};
         const expectedPlans = planOccurrenceReminders(
           occurrence,
-          new Date(now),
+          referenceTime,
           planOptions
         );
         if (!reminderArtifactsMatchPlans(artifacts, expectedPlans)) {

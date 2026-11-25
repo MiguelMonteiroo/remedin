@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Remedin — Onboarding</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --green-primary:   #0F6B3A;
+      --green-shadow:    #0A4D29;
+      --green-menta:     #6ECB98;
+      --green-chip-bg:   #E8F5EE;
+      --green-chip-text: #0D5C31;
+      --cream:           #F7F3EB;
+      --cream-card:      #FDFBF7;
+      --text-dark:       #14120E;
+      --text-muted:      #6A655C;
+      --font: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0A0F14;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100dvh;
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+      padding: 24px 16px;
+    }
+
+    /* ─── PHONE SHELL ─────────────────────────────────── */
+    .phone {
+      width: 390px;
+      height: 844px;
+      border-radius: 54px;
+      overflow: hidden;
+      position: relative;
+      box-shadow:
+        0 0 0 10px #1c2733,
+        0 0 0 12px #111a23,
+        0 48px 120px rgba(0,0,0,0.65);
+      background: #101A24;
+    }
+
+    /* ─── CINEMATIC BG ────────────────────────────────── */
+    .ambient-bg {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 65%;
+      background: radial-gradient(ellipse at top, #263b52, #101a24 72%);
+      transform-origin: top center;
+      transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: transform;
+      z-index: 1;
+    }
+
+    .top-gradient {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 140px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, transparent 100%);
+      z-index: 2; pointer-events: none;
+    }
+
+    .bottom-gradient {
+      position: absolute;
+      top: 42%; left: 0; width: 100%; height: 22%;
+      background: linear-gradient(to bottom, transparent 0%, var(--cream) 100%);
+      z-index: 2; pointer-events: none;
+    }
+
+    /* ─── TOP NAV ─────────────────────────────────────── */
+    .nav-top {
+      position: absolute;
+      top: 0; left: 0; width: 100%;
+      padding: 56px 24px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 20;
+    }
+
+    .nav-btn-icon {
+      width: 44px; height: 44px;
+      border-radius: 22px;
+      background: rgba(0,0,0,0.25);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: white;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease, transform 0.2s ease;
+    }
+    .nav-btn-icon.visible { opacity: 1; pointer-events: auto; }
+    .nav-btn-icon:active { transform: scale(0.9); }
+
+    .progress-track { display: flex; align-items: center; gap: 8px; }
+    .progress-dot {
+      height: 8px; border-radius: 4px;
+      background: rgba(255,255,255,0.3);
+      transition: width 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease;
+    }
+    .progress-dot[data-state="active"]   { width: 28px; background: #FFF; box-shadow: 0 0 10px rgba(255,255,255,0.35); }
+    .progress-dot[data-state="inactive"] { width: 8px; }
+
+    .nav-skip {
+      color: rgba(255,255,255,0.8);
+      font-size: 16px; font-weight: 700;
+      cursor: pointer; width: 44px; text-align: right;
+      transition: opacity 0.3s ease;
+    }
+    .nav-skip.hidden { opacity: 0; pointer-events: none; }
+
+    /* ─── FLOATING BADGE ──────────────────────────────── */
+    .badge-container {
+      position: absolute;
+      top: 52%; left: 24px;
+      z-index: 10;
+      transform: translateY(-50%);
+    }
+    .hero-badge {
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 10px 18px;
+      border-radius: 24px;
+      color: #101A24;
+      font-weight: 800; font-size: 14px;
+      display: inline-flex; align-items: center; gap: 8px;
+      box-shadow: 0 12px 24px rgba(0,0,0,0.12), inset 0 0 0 1px rgba(255,255,255,1);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
+    }
+    .hero-badge.swipe-out { transform: translateY(-8px) scale(0.92); opacity: 0; }
+    .hero-badge.swipe-in  { transform: translateY(0) scale(1); opacity: 1; }
+
+    /* ─── BOTTOM SHEET ────────────────────────────────── */
+    .bottom-sheet {
+      position: absolute;
+      bottom: 0; left: 0; width: 100%;
+      height: 44%;
+      background: var(--cream);
+      z-index: 15;
+      display: flex;
+      flex-direction: column;
+      /* Speech bubble notch no topo */
+      border-radius: 36px 36px 0 0;
+      box-shadow: 0 -1px 0 rgba(0,0,0,0.04), 0 -16px 48px rgba(0,0,0,0.06);
+    }
+
+    /* Notch arrow apontando para o mascote */
+    .sheet-notch {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      padding-top: 14px;
+      padding-bottom: 4px;
+      flex-shrink: 0;
+    }
+    .sheet-notch-handle {
+      width: 40px; height: 4px;
+      background: rgba(0,0,0,0.12);
+      border-radius: 2px;
+    }
+
+    .sheet-inner {
+      padding: 0 24px 40px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ─── CONTENT SLIDER ──────────────────────────────── */
+    .content-slider-wrapper {
+      position: relative;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .content-slide {
+      position: absolute;
+      top: 0; left: 0; width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(32px);
+      transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+                  transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .content-slide.active {
+      opacity: 1; pointer-events: auto; transform: translateX(0);
+    }
+    .content-slide.exit-left  { transform: translateX(-32px); opacity: 0; }
+    .content-slide.exit-right { transform: translateX(32px);  opacity: 0; }
+
+    .headline {
+      font-size: 32px;
+      font-weight: 900;
+      color: var(--text-dark);
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+      margin-bottom: 8px;
+      text-wrap: balance;
+    }
+    .headline em {
+      font-style: normal;
+      color: var(--green-primary);
+    }
+
+    /* Linha divisória sutil */
+    .slide-divider {
+      width: 32px; height: 3px;
+      background: var(--green-menta);
+      border-radius: 2px;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+
+    .subheadline {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-muted);
+      line-height: 1.45;
+      text-wrap: pretty;
+      margin-bottom: 16px;
+    }
+
+    /* ─── FEATURE CHIPS ───────────────────────────────── */
+    .chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--green-chip-bg);
+      color: var(--green-chip-text);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: 20px;
+      border: 1.5px solid rgba(15, 107, 58, 0.12);
+      /* Pop-in animation */
+      animation: chipPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+      cursor: default;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .chip:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(15, 107, 58, 0.15);
+    }
+    .chip:nth-child(1) { animation-delay: 0.05s; }
+    .chip:nth-child(2) { animation-delay: 0.12s; }
+    .chip:nth-child(3) { animation-delay: 0.19s; }
+
+    @keyframes chipPop {
+      0%   { transform: scale(0.7) translateY(6px); opacity: 0; }
+      100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
+    /* ─── CTA BUTTON ──────────────────────────────────── */
+    .cta-area {
+      width: 100%;
+      padding-top: 14px;
+      flex-shrink: 0;
+    }
+
+    .btn-chunky {
+      width: 100%;
+      height: 62px;
+      background: var(--green-primary);
+      border: none;
+      border-radius: 20px;
+      color: #FFF;
+      font-family: var(--font);
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      box-shadow: 0 6px 0 var(--green-shadow);
+      transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1),
+                  box-shadow 0.1s cubic-bezier(0.4, 0, 0.2, 1),
+                  filter 0.15s ease;
+    }
+    .btn-chunky:hover   { filter: brightness(1.06); }
+    .btn-chunky:active  { transform: translateY(6px); box-shadow: 0 0 0 var(--green-shadow); }
+
+    /* ─── SUCCESS OVERLAY ─────────────────────────────── */
+    .success-overlay {
+      position: absolute; inset: 0;
+      background: var(--green-primary);
+      z-index: 100;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 20px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    .success-overlay.visible { opacity: 1; pointer-events: auto; }
+    .success-icon {
+      width: 88px; height: 88px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 44px;
+      display: flex; align-items: center; justify-content: center;
+      animation: successPop 0.55s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes successPop {
+      0%   { transform: scale(0.3); opacity: 0; }
+      100% { transform: scale(1);   opacity: 1; }
+    }
+    .success-text { font-size: 32px; font-weight: 900; color: #FFF; letter-spacing: -0.03em; }
+
+    .preview-label {
+      color: #4A5D70; font-size: 12px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin-top: 28px; text-align: center; opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div style="display:flex;flex-direction:column;align-items:center;">
+    <div class="phone">
+
+      <!-- CINEMATIC BG -->
+      <div id="ambient-bg" class="ambient-bg" aria-hidden="true"></div>
+      <div class="top-gradient"></div>
+      <div class="bottom-gradient"></div>
+
+      <!-- SUCCESS OVERLAY -->
+      <div id="success-overlay" class="success-overlay">
+        <div class="success-icon">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#FFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 13l4 4L19 7"/>
+          </svg>
+        </div>
+        <p class="success-text">Tudo pronto!</p>
+      </div>
+
+      <!-- TOP NAV -->
+      <nav class="nav-top">
+        <button id="nav-back" class="nav-btn-icon" onclick="prevStep()" aria-label="Voltar">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div class="progress-track">
+          <div id="dot-1" class="progress-dot" data-state="active"></div>
+          <div id="dot-2" class="progress-dot" data-state="inactive"></div>
+          <div id="dot-3" class="progress-dot" data-state="inactive"></div>
+        </div>
+        <div id="nav-skip" class="nav-skip" role="button" tabindex="0" onclick="goToStep(3)">Pular</div>
+      </nav>
+
+      <!-- FLOATING BADGE -->
+      <div class="badge-container">
+        <div id="hero-badge" class="hero-badge"></div>
+      </div>
+
+      <!-- BOTTOM SHEET -->
+      <div class="bottom-sheet">
+
+        <!-- Handle / notch (visual de sheet nativa) -->
+        <div class="sheet-notch">
+          <div class="sheet-notch-handle"></div>
+        </div>
+
+        <div class="sheet-inner">
+          <!-- Content slides -->
+          <div class="content-slider-wrapper" id="slider-wrapper"></div>
+
+          <!-- CTA -->
+          <div class="cta-area">
+            <button id="btn-continue" class="btn-chunky" onclick="nextStep()">
+              Continuar
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <p class="preview-label">Remedin · Onboarding · Native App UX</p>
+  </div>
+
+  <script>
+    /* ── SVG icon helpers ───────────────────────────── */
+    const ico = (path) =>
+      `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
+
+    const ICONS = {
+      bell:    ico('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>'),
+      heart:   ico('<path d="M19.5 12.572l-7.5 7.428l-7.5-7.428a5 5 0 1 1 7.5-6.566a5 5 0 1 1 7.5 6.572"/>'),
+      shield:  ico('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'),
+      cloud:   ico('<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>'),
+      lock:    ico('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'),
+      phone:   ico('<rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>'),
+      timer:   ico('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'),
+      check:   ico('<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>'),
+      zap:     ico('<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>'),
+      user:    ico('<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'),
+      keyOff:  ico('<path d="M2 2l20 20"/><path d="M10.5 10.5A4 4 0 1 0 14 15M8 15H4a1 1 0 0 1-1-1v-1a1 1 0 0 1 1-1h1"/>'),
+    };
+
+    /* ── Steps definition ───────────────────────────── */
+    const steps = {
+      1: {
+        title:     'Seu parceiro de <em>saúde</em>.',
+        subtitle:  'Lembretes no horário certo. Sem nuvem, sem conta.',
+        chips:     [
+          { icon: ICONS.bell,  label: 'Alarmes pontuais' },
+          { icon: ICONS.zap,   label: 'Instantâneo'      },
+          { icon: ICONS.heart, label: '100% Grátis'      },
+        ],
+        badge:     `${ICONS.heart}<span>100% Grátis</span>`,
+        transform: 'scale(1.2) translate(0, 0)',
+        btn:       'Continuar',
+      },
+      2: {
+        title:     'Tudo no seu <em>aparelho</em>.',
+        subtitle:  'Seus dados ficam só no seu bolso. Sem upload, sem rastreio.',
+        chips:     [
+          { icon: ICONS.lock,   label: 'Offline total'    },
+          { icon: ICONS.shield, label: 'Dados seus'       },
+          { icon: ICONS.phone,  label: 'Local first'      },
+        ],
+        badge:     `${ICONS.lock}<span>Privacidade local</span>`,
+        transform: 'scale(1.25) translate(-4%, -1%)',
+        btn:       'Continuar',
+      },
+      3: {
+        title:     'Só precisamos do seu <em>nome</em>.',
+        subtitle:  'Sem email. Sem senha. Sem nuvem. Seus dados ficam só aqui.',
+        chips:     [
+          { icon: ICONS.user,   label: 'Só seu nome'   },
+          { icon: ICONS.keyOff, label: 'Sem senha'      },
+          { icon: ICONS.timer,  label: '30 segundos'    },
+        ],
+        badge:     `${ICONS.user}<span>Só seu nome</span>`,
+        transform: 'scale(1.22) translate(4%, 0)',
+        btn:       'Vamos lá',
+      },
+    };
+
+    let current = 1;
+    const TOTAL = 3;
+
+    /* ── Build slide HTML ───────────────────────────── */
+    function slideHTML(step) {
+      const s = steps[step];
+      const chipEls = s.chips.map(c =>
+        `<span class="chip">${c.icon}${c.label}</span>`
+      ).join('');
+      return `
+        <h1 class="headline">${s.title}</h1>
+        <div class="slide-divider"></div>
+        <p class="subheadline">${s.subtitle}</p>
+        <div class="chips-row">${chipEls}</div>
+      `;
+    }
+
+    /* ── Initialize slides ──────────────────────────── */
+    function renderSlides() {
+      const w = document.getElementById('slider-wrapper');
+      w.innerHTML = '';
+      for (let i = 1; i <= TOTAL; i++) {
+        const el = document.createElement('div');
+        el.className = `content-slide ${i === current ? 'active' : ''}`;
+        el.id = `slide-${i}`;
+        el.innerHTML = slideHTML(i);
+        w.appendChild(el);
+      }
+    }
+
+    /* ── Update UI state ────────────────────────────── */
+    function updateUI(dir = 'forward') {
+      const bg      = document.getElementById('ambient-bg');
+      const back    = document.getElementById('nav-back');
+      const skip    = document.getElementById('nav-skip');
+      const badge   = document.getElementById('hero-badge');
+      const btnCont = document.getElementById('btn-continue');
+
+      bg.style.transform = steps[current].transform;
+      back.classList.toggle('visible', current > 1);
+      skip.classList.toggle('hidden', current === TOTAL);
+
+      for (let i = 1; i <= TOTAL; i++) {
+        document.getElementById(`dot-${i}`)
+          .setAttribute('data-state', i === current ? 'active' : 'inactive');
+      }
+
+      /* Badge transition */
+      badge.classList.remove('swipe-in');
+      badge.classList.add('swipe-out');
+      setTimeout(() => {
+        badge.innerHTML = steps[current].badge;
+        badge.classList.remove('swipe-out');
+        badge.classList.add('swipe-in');
+      }, 180);
+
+      /* Button */
+      const arrow = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`;
+      btnCont.innerHTML = steps[current].btn + arrow;
+
+      /* Slides */
+      for (let i = 1; i <= TOTAL; i++) {
+        const s = document.getElementById(`slide-${i}`);
+        if (i === current) {
+          s.className = 'content-slide';
+          void s.offsetWidth;
+          s.style.transform = dir === 'forward' ? 'translateX(32px)' : 'translateX(-32px)';
+          s.style.opacity = '0';
+          /* Re-render chips so animation re-triggers */
+          s.innerHTML = slideHTML(i);
+          requestAnimationFrame(() => {
+            s.classList.add('active');
+            s.style.transform = '';
+            s.style.opacity = '';
+          });
+        } else if (s.classList.contains('active')) {
+          s.classList.remove('active');
+          s.classList.add(dir === 'forward' ? 'exit-left' : 'exit-right');
+        }
+      }
+    }
+
+    function nextStep() {
+      if (current < TOTAL) {
+        current++;
+        updateUI('forward');
+      } else {
+        const ov = document.getElementById('success-overlay');
+        ov.classList.add('visible');
+        setTimeout(() => {
+          ov.classList.remove('visible');
+          current = 1;
+          renderSlides();
+          updateUI('backward');
+        }, 2000);
+      }
+    }
+
+    function prevStep() {
+      if (current > 1) { current--; updateUI('backward'); }
+    }
+
+    function goToStep(s) {
+      if (s === current) return;
+      const dir = s > current ? 'forward' : 'backward';
+      current = s;
+      updateUI(dir);
+    }
+
+    /* ── Boot ───────────────────────────────────────── */
+    renderSlides();
+    setTimeout(() => {
+      document.getElementById('hero-badge').innerHTML = steps[1].badge;
+      document.getElementById('ambient-bg').style.transform = steps[1].transform;
+    }, 40);
+  </script>
+</body>
+</html>

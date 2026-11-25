@@ -18,6 +18,7 @@ import com.facebook.react.bridge.Arguments
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
 import com.facebook.react.modules.core.DeviceEventManagerModule
+import com.swmansion.rnscreens.fragment.restoration.RNScreensFragmentFactory
 import io.invertase.notifee.NotifeeApiModule
 import java.lang.ref.WeakReference
 
@@ -39,6 +40,7 @@ class MainActivity : ReactActivity() {
       }
 
   override fun onCreate(savedInstanceState: Bundle?) {
+    supportFragmentManager.fragmentFactory = RNScreensFragmentFactory()
     handleAlarmIntent(intent, emit = false)
     super.onCreate(savedInstanceState)
     activeInstance = WeakReference(this)
@@ -77,9 +79,7 @@ class MainActivity : ReactActivity() {
   }
 
   private fun handleAlarmIntent(sourceIntent: Intent?, emit: Boolean) {
-    val payload = alarmPayload(sourceIntent) ?: return
-    val explicitAlarmMode = sourceIntent?.getBooleanExtra(EXTRA_ALARM_MODE, false) == true
-    if (!explicitAlarmMode && !isAlarmPayload(payload)) return
+    val payload = validatedAlarmPayload(sourceIntent) ?: return
     activeAlarmId = payload.getString("notificationId")
     alarmModeActive = true
     storePendingAlarmPayload(payload)
@@ -97,7 +97,9 @@ class MainActivity : ReactActivity() {
   }
 
   private fun validatedAlarmPayload(sourceIntent: Intent?): Bundle? {
-    val payload = alarmPayload(sourceIntent) ?: return null
+    if (sourceIntent?.action != MedicationAlarmService.ACTION_OPEN_ALARM) return null
+    val alarmId = sourceIntent.getStringExtra(MedicationAlarmService.EXTRA_ALARM_ID) ?: return null
+    val payload = MedicationAlarmService.getActiveAlarmScreenPayload(alarmId) ?: return null
     return payload.takeIf(::isAlarmPayload)
   }
 
@@ -139,10 +141,7 @@ class MainActivity : ReactActivity() {
 
   private fun clearAlarmIntent() {
     intent?.apply {
-      removeExtra(EXTRA_ALARM_MODE)
       removeExtra(MedicationAlarmService.EXTRA_ALARM_ID)
-      removeExtra(MedicationAlarmService.EXTRA_TIMEOUT_MILLIS)
-      removeExtra(MedicationAlarmService.NOTIFICATION_EXTRA)
       action = null
       data = null
     }
@@ -175,17 +174,6 @@ class MainActivity : ReactActivity() {
     run { window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE }
   }
 
-  private fun alarmPayload(sourceIntent: Intent?): Bundle? {
-    val notification =
-        sourceIntent?.getBundleExtra(MedicationAlarmService.NOTIFICATION_EXTRA) ?: return null
-    return Bundle().apply {
-      putString("notificationId", notification.getString("id").orEmpty())
-      putString("title", notification.getString("title") ?: "Hora do medicamento")
-      putString("body", notification.getString("body") ?: "Dose agendada agora.")
-      putBundle("data", notification.getBundle("data") ?: Bundle())
-    }
-  }
-
   private fun emitPendingAlarmPayload() {
     val payload = peekPendingAlarmPayload() ?: return
     emitAlarmPayload(payload)
@@ -207,7 +195,6 @@ class MainActivity : ReactActivity() {
   }
 
   companion object {
-    const val EXTRA_ALARM_MODE = "remedinAlarmMode"
     const val INITIAL_ALARM_PAYLOAD_PROP = "initialAlarmPayload"
     const val ALARM_DELIVERED_EVENT = "RemedinNativeAlarmDelivered"
     const val ALARM_STOPPED_EVENT = "RemedinNativeAlarmStopped"

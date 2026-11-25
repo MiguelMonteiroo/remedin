@@ -1,7 +1,8 @@
 import { StyleSheet, View } from "react-native";
 import { Heart, Pill, Plus } from "lucide-react-native";
 import { EmptyState } from "./ui/EmptyState";
-import { colors } from "../theme/colors";
+import { useAppTheme } from "../theme/ThemeProvider";
+import { type ThemeColors } from "../theme/theme";
 import { radii } from "../theme/radii";
 import { spacing } from "../theme/spacing";
 
@@ -19,19 +20,21 @@ export function MedicationEmptyState(props: Props) {
 }
 
 function CareIllustration() {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   return (
     <View accessibilityElementsHidden importantForAccessibility="no" style={styles.art}>
       <View style={styles.pillDisc}>
         <Pill color={colors.primaryDark} size={62} strokeWidth={1.8} />
       </View>
       <View style={styles.heartDisc}>
-        <Heart color={colors.surface} fill={colors.surface} size={24} strokeWidth={2} />
+        <Heart color={colors.primaryDark} fill={colors.primaryDark} size={24} strokeWidth={2} />
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   art: { height: 132, marginBottom: spacing.lg, width: 156 },
   pillDisc: {
     alignItems: "center",

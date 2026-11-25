@@ -1,6 +1,7 @@
 import React from "react";
 // @ts-expect-error react-test-renderer does not ship declarations in this project.
 import TestRenderer, { act } from "react-test-renderer";
+import { AppThemeProvider } from "../../theme/ThemeProvider";
 import { MedicationEmptyState } from "../../components/MedicationEmptyState";
 
 describe("MedicationEmptyState", () => {
@@ -10,12 +11,12 @@ describe("MedicationEmptyState", () => {
 
     await act(async () => {
       renderer = TestRenderer.create(
-        <MedicationEmptyState
+        <AppThemeProvider><MedicationEmptyState
           actionLabel="Adicionar medicamento"
           message="Adicione seu primeiro medicamento."
           onAction={onAction}
           title="Nenhum medicamento cadastrado"
-        />
+        /></AppThemeProvider>
       );
     });
 

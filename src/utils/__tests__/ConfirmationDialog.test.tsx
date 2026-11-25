@@ -2,6 +2,7 @@ import React from "react";
 // The runtime package is intentionally sufficient for this focused component test.
 // @ts-expect-error react-test-renderer does not ship declarations in this project.
 import TestRenderer, { act } from "react-test-renderer";
+import { AppThemeProvider } from "../../theme/ThemeProvider";
 import { ConfirmationDialog } from "../../components/ui/ConfirmationDialog";
 
 describe("ConfirmationDialog", () => {
@@ -12,7 +13,7 @@ describe("ConfirmationDialog", () => {
 
     await act(async () => {
       renderer = TestRenderer.create(
-        <ConfirmationDialog
+        <AppThemeProvider><ConfirmationDialog
           cancelLabel="Cancelar"
           confirmAccessibilityLabel="Confirmar remoção"
           confirmLabel="Remover"
@@ -22,7 +23,7 @@ describe("ConfirmationDialog", () => {
           title="Remover medicamento"
           variant="destructive"
           visible
-        />
+        /></AppThemeProvider>
       );
     });
 

@@ -1,7 +1,7 @@
 import { createBottomTabNavigator, type BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Pressable, StyleSheet, View } from "react-native";
-import { CalendarCheck, History, PillBottle, UserRound, type LucideIcon } from "lucide-react-native";
+import { Home, Pill, History, UserRound, type LucideIcon } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HomeScreen } from "../screens/HomeScreen";
 import { AddMedicationScreen } from "../screens/AddMedicationScreen";
@@ -11,7 +11,7 @@ import { HistoryScreen } from "../screens/HistoryScreen";
 import { MedicationsScreen } from "../screens/MedicationsScreen";
 import { SettingsScreen } from "../screens/SettingsScreen";
 import { RootStackParamList, RootTabParamList } from "./types";
-import { colors } from "../theme/colors";
+import { useAppTheme } from "../theme/ThemeProvider";
 import { ptBR } from "../i18n/ptBR";
 import { fontFamilies } from "../theme/typography";
 import { AppText } from "../components/ui/AppText";
@@ -19,17 +19,17 @@ import { AppText } from "../components/ui/AppText";
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator<RootTabParamList>();
 
-const TAB_CONFIG: Record<keyof RootTabParamList, { flex: number; icon: LucideIcon; label: string }> = {
-  Home: { flex: 0.8, icon: CalendarCheck, label: ptBR.tabs.today },
-  Medications: { flex: 1.4, icon: PillBottle, label: ptBR.tabs.medications },
-  History: { flex: 1, icon: History, label: ptBR.tabs.history },
-  Profile: { flex: 0.8, icon: UserRound, label: ptBR.tabs.profile },
+const TAB_CONFIG: Record<keyof RootTabParamList, { icon: LucideIcon; label: string }> = {
+  Home: { icon: Home, label: ptBR.tabs.today },
+  Medications: { icon: Pill, label: ptBR.tabs.medications },
+  History: { icon: History, label: ptBR.tabs.history },
+  Profile: { icon: UserRound, label: ptBR.tabs.profile },
 };
 
 function MainTabs() {
   return (
     <Tabs.Navigator
-      tabBar={(props) => <MainTabBar {...props} />}
+      tabBar={(props) => <BottomNavigationBar {...props} />}
       screenOptions={{
         headerShown: false,
       }}
@@ -66,16 +66,28 @@ function MainTabs() {
   );
 }
 
-function MainTabBar({ state, navigation }: BottomTabBarProps) {
+export function BottomNavigationBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { colors } = useAppTheme();
 
   return (
-    <View style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+    <View
+      style={[
+        styles.bar,
+        {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+          paddingBottom: insets.bottom,
+          paddingLeft: insets.left,
+          paddingRight: insets.right,
+        },
+      ]}
+    >
       {state.routes.map((route, index) => {
         const config = TAB_CONFIG[route.name as keyof RootTabParamList];
         const focused = state.index === index;
-        const color = focused ? colors.primary : colors.textMuted;
         const Icon = config.icon;
+        const itemTint = focused ? colors.primaryDark : colors.textMuted;
 
         return (
           <Pressable
@@ -88,10 +100,22 @@ function MainTabBar({ state, navigation }: BottomTabBarProps) {
               const event = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
               if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
             }}
-            style={({ pressed }) => [styles.tabItem, { flex: config.flex }, pressed && styles.tabPressed]}
+            style={({ pressed }) => [
+              styles.navItem,
+              pressed && { backgroundColor: colors.surfaceMuted },
+            ]}
           >
-            <Icon color={color} size={25} strokeWidth={2} />
-            <AppText allowFontScaling={false} numberOfLines={1} style={[styles.tabLabel, { color }]} variant="caption" weight="medium">
+            {focused ? (
+              <View style={[styles.indicator, { backgroundColor: colors.primary }]} />
+            ) : null}
+            <Icon color={itemTint} size={22} strokeWidth={focused ? 2.5 : 2.1} />
+            <AppText
+              maxFontSizeMultiplier={1.25}
+              numberOfLines={2}
+              style={[styles.navLabel, { color: itemTint }]}
+              variant="caption"
+              weight={focused ? "bold" : "medium"}
+            >
               {config.label}
             </AppText>
           </Pressable>
@@ -102,8 +126,10 @@ function MainTabBar({ state, navigation }: BottomTabBarProps) {
 }
 
 export function AppNavigator() {
+  const { colors } = useAppTheme();
   return (
     <Stack.Navigator
+      initialRouteName="MainTabs"
       screenOptions={{
         headerStyle: { backgroundColor: colors.background },
         headerShadowVisible: false,
@@ -136,26 +162,30 @@ export function AppNavigator() {
 }
 
 const styles = StyleSheet.create({
-  tabBar: {
-    alignItems: "center",
-    backgroundColor: colors.surface,
-    borderTopColor: colors.border,
-    borderTopWidth: 1,
+  bar: {
     flexDirection: "row",
-    minHeight: 76,
-    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
-  tabItem: {
+  navItem: {
+    flex: 1,
     alignItems: "center",
     gap: 3,
-    justifyContent: "center",
     minHeight: 58,
+    paddingTop: 10,
+    paddingBottom: 8,
+    paddingHorizontal: 2,
   },
-  tabLabel: {
+  indicator: {
+    position: "absolute",
+    top: 0,
+    width: 24,
+    height: 2,
+    borderBottomLeftRadius: 2,
+    borderBottomRightRadius: 2,
+  },
+  navLabel: {
+    fontSize: 12,
+    lineHeight: 16,
     textAlign: "center",
-    width: "100%",
-  },
-  tabPressed: {
-    opacity: 0.7,
   },
 });

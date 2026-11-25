@@ -1,7 +1,8 @@
 import { StyleSheet, View } from "react-native";
 import { Info } from "lucide-react-native";
 import { AppText } from "./ui/AppText";
-import { colors } from "../theme/colors";
+import { useAppTheme } from "../theme/ThemeProvider";
+import { type ThemeColors } from "../theme/theme";
 import { radii } from "../theme/radii";
 import { spacing } from "../theme/spacing";
 
@@ -10,6 +11,8 @@ type Props = {
 };
 
 export function CareInfoTip({ text }: Props) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   return (
     <View style={styles.container}>
       <View style={styles.icon}>
@@ -22,7 +25,7 @@ export function CareInfoTip({ text }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     alignItems: "center",
     backgroundColor: colors.infoSoft,

@@ -56,10 +56,26 @@ export type ReminderNotification = {
   scheduledFor: string;
 };
 
+export const PROFILE_AVATARS = [
+  "bear",
+  "cat",
+  "dog",
+  "owl",
+  "capybara",
+  "rabbit",
+  "penguin",
+  "axolotl",
+  "turtle",
+  "octopus",
+] as const;
+export type ProfileAvatar = (typeof PROFILE_AVATARS)[number];
+
 export type ReminderSettings = {
   notificationsEnabled: boolean;
   defaultSnoozeMinutes: number;
   userName: string;
+  profileAvatar?: ProfileAvatar;
+  onboardingIntroSeen?: boolean;
   fullScreenAlarmEnabled: boolean;
   criticalAlertsEnabled: boolean;
   showLockScreenDetails: boolean;

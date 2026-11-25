@@ -11,6 +11,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
+import androidx.annotation.RequiresApi
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReactApplicationContext
@@ -88,12 +89,7 @@ class ReminderPermissionsModule(
   @ReactMethod
   fun openCriticalAlarmChannelSettings(promise: Promise) {
     try {
-      val intent =
-          Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
-              .putExtra(Settings.EXTRA_APP_PACKAGE, reactApplicationContext.packageName)
-              .putExtra(Settings.EXTRA_CHANNEL_ID, CRITICAL_ALARM_CHANNEL_ID)
-              .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-      reactApplicationContext.startActivity(intent)
+      openAlarmChannelSettings(CRITICAL_ALARM_CHANNEL_ID)
       promise.resolve(null)
     } catch (error: Exception) {
       promise.reject("critical-alarm-channel-settings", error)
@@ -153,6 +149,7 @@ class ReminderPermissionsModule(
     }
   }
 
+  @RequiresApi(Build.VERSION_CODES.O)
   private fun createAlarmChannel(
       id: String,
       name: String,
@@ -230,16 +227,24 @@ class ReminderPermissionsModule(
     try {
       val channelId =
           if (critical) NATIVE_CRITICAL_ALARM_CHANNEL_ID else NATIVE_ALARM_CHANNEL_ID
-      val intent =
-          Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
-              .putExtra(Settings.EXTRA_APP_PACKAGE, reactApplicationContext.packageName)
-              .putExtra(Settings.EXTRA_CHANNEL_ID, channelId)
-              .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-      reactApplicationContext.startActivity(intent)
+      openAlarmChannelSettings(channelId)
       promise.resolve(null)
     } catch (error: Exception) {
       promise.reject("native-alarm-channel-settings", error)
     }
+  }
+
+  private fun openAlarmChannelSettings(channelId: String) {
+    val packageName = reactApplicationContext.packageName
+    val intent =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+          Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+              .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+              .putExtra(Settings.EXTRA_CHANNEL_ID, channelId)
+        } else {
+          Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))
+        }
+    reactApplicationContext.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
   }
 
   @ReactMethod

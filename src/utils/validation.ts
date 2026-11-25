@@ -54,7 +54,7 @@ export function validateSchedule(input: ScheduleInput): string | null {
     }
   }
 
-  if (input.kind === "intervalHours" && input.intervalHours < 1) {
+  if (input.kind === "intervalHours" && (!Number.isFinite(input.intervalHours) || input.intervalHours < 1)) {
     errors.push("O intervalo deve ser de pelo menos 1 hora.");
   }
 

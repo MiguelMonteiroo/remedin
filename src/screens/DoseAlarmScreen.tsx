@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import notifee from "@notifee/react-native";
 import { BellRing, CheckCircle2, Clock3, Volume2 } from "lucide-react-native";
+import { RemedinHorizontalSignature } from "../components/brand/RemedinBrand";
 import { AppText } from "../components/ui/AppText";
 import { createRepositories } from "../database/db";
 import { openAppDatabase } from "../database/openAppDatabase";
@@ -20,7 +21,8 @@ import {
   type DoseAlarmPayload,
 } from "../services/reminders/alarmPayloadLoader";
 import { finishActiveAlarm } from "../services/reminders/nativeReminderPermissions";
-import { colors } from "../theme/colors";
+import { useAppTheme } from "../theme/ThemeProvider";
+import { type ThemeColors } from "../theme/theme";
 import { radii } from "../theme/radii";
 import { spacing } from "../theme/spacing";
 import type { NotificationActionId } from "../types/domain";
@@ -30,6 +32,7 @@ const SYSTEM_NOTIFICATION_CLEARANCE = (StatusBar.currentHeight ?? 24) + 96;
 type Props = {
   payload?: DoseAlarmPayload | null;
   embedded?: boolean;
+  preview?: boolean;
   onClose?: () => void;
   onDoseAction?: () => Promise<void> | void;
 };
@@ -114,9 +117,12 @@ async function expandDoseWindow(
 export function DoseAlarmScreen({
   payload: initialPayload,
   embedded,
+  preview,
   onClose,
   onDoseAction,
 }: Props) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const [payloads, setPayloads] = useState<DoseAlarmPayload[]>(
     initialPayload ? [initialPayload] : []
   );
@@ -148,6 +154,7 @@ export function DoseAlarmScreen({
   }, [embedded, payloads]);
 
   useEffect(() => {
+    if (preview) return;
     let cancelled = false;
     setLoadFailed(false);
 
@@ -177,18 +184,19 @@ export function DoseAlarmScreen({
     return () => {
       cancelled = true;
     };
-  }, [initialPayload, loadAttempt]);
+  }, [initialPayload, loadAttempt, preview]);
 
   const primaryPayload = payloads[0];
   const isTest = primaryPayload?.data.artifactKind === "alarmTest";
 
   useEffect(() => {
+    if (preview) return;
     const timer = setTimeout(() => {
       if (embedded) onClose?.();
       else closeActiveAlarm(primaryPayload?.notificationId);
     }, isTest ? 10_000 : 60_000);
     return () => clearTimeout(timer);
-  }, [embedded, isTest, onClose, primaryPayload?.notificationId]);
+  }, [embedded, isTest, onClose, primaryPayload?.notificationId, preview]);
 
   const time = useMemo(
     () => formatAlarmTime(String(primaryPayload?.data.scheduledAt || "")),
@@ -199,6 +207,10 @@ export function DoseAlarmScreen({
     payload: DoseAlarmPayload,
     actionId: NotificationActionId
   ) {
+    if (preview) {
+      onClose?.();
+      return;
+    }
     if (busyId) return;
     setBusyId(payload.notificationId);
     try {
@@ -279,13 +291,18 @@ export function DoseAlarmScreen({
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.brandRow}>
-          <View style={styles.brandIcon}>
-            <BellRing color={colors.primaryDark} size={28} />
+        <View style={styles.brandHeader}>
+          <RemedinHorizontalSignature
+            color={colors.primary}
+            fontSize={22}
+            symbolSize={28}
+          />
+          <View style={styles.activePillBadge}>
+            <Volume2 color={colors.primaryDark} size={16} />
+            <AppText variant="caption" weight="bold" style={styles.activeText}>
+              Alarme ativo
+            </AppText>
           </View>
-          <AppText variant="heading" style={styles.brand}>
-            Remedin
-          </AppText>
         </View>
 
         <AppText
@@ -313,7 +330,7 @@ export function DoseAlarmScreen({
           const busy = busyId === payload.notificationId;
           return (
             <View key={payload.notificationId} style={styles.doseCard}>
-              <AppText variant="heading" style={styles.medicationName}>
+              <AppText variant="heading" weight="bold" style={styles.medicationName}>
                 {payload.title}
               </AppText>
               {payload.body ? (
@@ -333,7 +350,7 @@ export function DoseAlarmScreen({
                     pressed && styles.pressed,
                   ]}
                 >
-                  <Volume2 color={colors.white} size={22} />
+                  <Volume2 color={colors.onPrimary} size={22} />
                   <AppText weight="bold" style={styles.primaryButtonText}>Encerrar teste</AppText>
                 </Pressable>
               ) : (
@@ -349,14 +366,14 @@ export function DoseAlarmScreen({
                         pressed && styles.pressed,
                       ]}
                     >
-                      <CheckCircle2 color={colors.white} size={23} />
+                      <CheckCircle2 color={colors.onPrimary} size={23} />
                       <AppText weight="bold" style={styles.primaryButtonText}>
                         Marcar como tomado
                       </AppText>
                     </Pressable>
                   ) : (
                     <View style={styles.privateNotice}>
-                      <AppText muted>
+                      <AppText muted style={{ color: colors.primaryDark }}>
                         Desbloqueie o aparelho e abra o Remedin para registrar a dose.
                       </AppText>
                     </View>
@@ -371,7 +388,7 @@ export function DoseAlarmScreen({
                       pressed && styles.pressed,
                     ]}
                   >
-                    <Clock3 color={colors.accent} size={23} />
+                    <Clock3 color={colors.primaryDark} size={23} />
                     <AppText weight="bold" style={styles.secondaryButtonText}>Adiar 5 min</AppText>
                   </Pressable>
                 </>
@@ -379,11 +396,6 @@ export function DoseAlarmScreen({
             </View>
           );
         })}
-
-        <View style={styles.activeRow}>
-          <Volume2 color={colors.primary} size={20} />
-          <AppText weight="semibold" style={styles.activeText}>Alarme ativo</AppText>
-        </View>
       </ScrollView>
     </View>
   );
@@ -393,7 +405,7 @@ export function DoseAlarmRoot({ payload }: { payload?: DoseAlarmPayload }) {
   return <DoseAlarmScreen payload={payload} />;
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,
@@ -401,85 +413,87 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.xl,
     paddingBottom: spacing.xxl,
     paddingTop: SYSTEM_NOTIFICATION_CLEARANCE,
   },
-  brandRow: { alignItems: "center", flexDirection: "row", gap: spacing.sm },
-  brandIcon: {
+  brandHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  activePillBadge: {
     alignItems: "center",
     backgroundColor: colors.primarySoft,
-    borderRadius: radii.md,
-    height: 44,
-    justifyContent: "center",
-    width: 44,
+    borderColor: colors.border,
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 6,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
   },
-  brand: { color: colors.primaryDark },
   time: {
     color: colors.primaryDark,
+    fontVariant: ["tabular-nums"],
     fontSize: 72,
     includeFontPadding: true,
     lineHeight: 88,
-    marginTop: spacing.xxl,
+    marginTop: spacing.xl,
     minHeight: 88,
     textAlign: "center",
     textAlignVertical: "center",
   },
-  title: { color: colors.primaryDark, marginTop: spacing.md, textAlign: "center" },
-  subtitle: { marginTop: spacing.sm, textAlign: "center" },
+  title: { color: colors.primaryDark, marginTop: spacing.sm, textAlign: "center" },
+  subtitle: { color: colors.textMuted, marginTop: spacing.xs, textAlign: "center" },
   doseCard: {
     backgroundColor: colors.surface,
     borderColor: colors.border,
-    borderRadius: radii.md,
+    borderRadius: radii.xl,
     borderWidth: 1,
-    marginTop: spacing.lg,
-    padding: spacing.lg,
+    marginTop: spacing.xl,
+    padding: spacing.xl,
   },
   medicationName: { color: colors.text },
-  notes: { marginTop: spacing.xs },
+  notes: { color: colors.textMuted, marginTop: spacing.xs },
   primaryButton: {
     alignItems: "center",
-    backgroundColor: colors.primaryDark,
-    borderRadius: radii.md,
-    flexDirection: "row",
-    gap: spacing.sm,
-    justifyContent: "center",
-    marginTop: spacing.lg,
-    minHeight: 52,
-    paddingHorizontal: spacing.md,
-  },
-  primaryButtonText: { color: colors.white },
-  secondaryButton: {
-    alignItems: "center",
-    borderColor: colors.accent,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    flexDirection: "row",
-    gap: spacing.sm,
-    justifyContent: "center",
-    marginTop: spacing.md,
-    minHeight: 52,
-    paddingHorizontal: spacing.md,
-  },
-  secondaryButtonText: { color: colors.accent },
-  privateNotice: {
-    backgroundColor: colors.primarySoft,
-    borderRadius: radii.md,
-    marginTop: spacing.lg,
-    padding: spacing.md,
-  },
-  pressed: { opacity: 0.75 },
-  activeRow: {
-    alignItems: "center",
+    backgroundColor: colors.primary,
+    borderRadius: radii.pill,
     flexDirection: "row",
     gap: spacing.sm,
     justifyContent: "center",
     marginTop: spacing.xl,
+    minHeight: 58,
+    paddingHorizontal: spacing.xl,
   },
-  activeText: { color: colors.primary },
+  primaryButtonText: { color: colors.onPrimary },
+  secondaryButton: {
+    alignItems: "center",
+    backgroundColor: colors.background,
+    borderColor: colors.primary,
+    borderRadius: radii.pill,
+    borderWidth: 1.5,
+    flexDirection: "row",
+    gap: spacing.sm,
+    justifyContent: "center",
+    marginTop: spacing.md,
+    minHeight: 56,
+    paddingHorizontal: spacing.xl,
+  },
+  secondaryButtonText: { color: colors.primaryDark },
+  privateNotice: {
+    backgroundColor: colors.primarySoft,
+    borderRadius: radii.lg,
+    marginTop: spacing.lg,
+    padding: spacing.md,
+  },
+  pressed: { opacity: 0.8 },
+  activeText: { color: colors.primaryDark },
   loadingState: { alignItems: "center", alignSelf: "stretch" },
   loadingText: { color: colors.primaryDark, marginTop: spacing.md },
   loadingDescription: {
+    color: colors.textMuted,
     marginTop: spacing.sm,
     maxWidth: 320,
     paddingHorizontal: spacing.lg,

@@ -2,7 +2,8 @@ import { Pressable, StyleSheet, View } from "react-native";
 import { Check, ChevronRight, Minus, RotateCcw } from "lucide-react-native";
 import { AppText } from "./ui/AppText";
 import { AppButton } from "./ui/AppButton";
-import { colors } from "../theme/colors";
+import { useAppTheme } from "../theme/ThemeProvider";
+import { type ThemeColors } from "../theme/theme";
 import { radii } from "../theme/radii";
 import { spacing } from "../theme/spacing";
 import { DoseStatus } from "../types/domain";
@@ -26,6 +27,8 @@ export function CareCompletedDoseRow({
   onUndo,
   undoing = false,
 }: Props) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const isSkipped = status === "skipped";
   const Icon = isSkipped ? Minus : Check;
   const statusText = isSkipped ? "Pulada" : "Tomada";
@@ -40,7 +43,7 @@ export function CareCompletedDoseRow({
         accessibilityLabel={`Dose ${statusText.toLowerCase()}: ${title}`}
       >
         <View style={[styles.statusIcon, isSkipped && styles.skippedIcon]}>
-          <Icon color={colors.white} size={18} />
+          <Icon color={isSkipped ? colors.danger : colors.success} size={18} />
         </View>
         <AppText
           weight="semibold"
@@ -76,7 +79,7 @@ export function CareCompletedDoseRow({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   row: {
     alignItems: "center",
     borderBottomColor: colors.border,
@@ -93,7 +96,7 @@ const styles = StyleSheet.create({
   },
   statusIcon: {
     alignItems: "center",
-    backgroundColor: colors.success,
+    backgroundColor: colors.successSoft,
     borderRadius: radii.pill,
     height: 32,
     justifyContent: "center",
@@ -101,7 +104,7 @@ const styles = StyleSheet.create({
     width: 32,
   },
   skippedIcon: {
-    backgroundColor: colors.danger,
+    backgroundColor: colors.dangerSoft,
   },
   time: {
     color: colors.success,
@@ -113,6 +116,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   name: {
+    color: colors.text,
   },
   statusText: {
     color: colors.success,

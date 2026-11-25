@@ -1,7 +1,7 @@
 import { StyleSheet, View } from "react-native";
 import { AppText } from "./AppText";
 import { spacing } from "../../theme/spacing";
-import { colors } from "../../theme/colors";
+import { useAppTheme } from "../../theme/ThemeProvider";
 
 type Props = {
   title: string;
@@ -9,13 +9,14 @@ type Props = {
 };
 
 export function SectionHeader({ title, meta }: Props) {
+  const { colors } = useAppTheme();
   return (
     <View style={styles.row}>
-      <AppText variant="subheading" weight="semibold" style={styles.title}>
+      <AppText variant="subheading" weight="semibold" style={{ color: colors.primaryDark }}>
         {title}
       </AppText>
       {meta ? (
-        <AppText variant="caption" muted>
+        <AppText variant="caption" muted style={{ color: colors.textMuted }}>
           {meta}
         </AppText>
       ) : null}
@@ -30,8 +31,5 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: spacing.sm,
     marginTop: spacing.lg,
-  },
-  title: {
-    color: colors.primary,
   },
 });

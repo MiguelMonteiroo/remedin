@@ -6,7 +6,7 @@ import React, {
   useState,
   useRef,
 } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { Database, RefreshCw } from "lucide-react-native";
 import { NativeDB } from "./nativeDb";
 import { openAppDatabase, resetAppDatabaseForRetry } from "./openAppDatabase";
@@ -14,7 +14,9 @@ import { AppButton } from "../components/ui/AppButton";
 import { AppCard } from "../components/ui/AppCard";
 import { AppText } from "../components/ui/AppText";
 import { Screen } from "../components/ui/Screen";
-import { colors } from "../theme/colors";
+import { BrandSplashScreen } from "../components/onboarding/BrandSplashScreen";
+import { useAppTheme } from "../theme/ThemeProvider";
+import { type ThemeColors } from "../theme/theme";
 import { spacing } from "../theme/spacing";
 
 interface DatabaseContextValue {
@@ -42,6 +44,8 @@ export function useDatabaseStatus() {
 }
 
 export function DatabaseProvider({ children }: { children: React.ReactNode }) {
+  const { colors } = useAppTheme();
+  const styles = createStyles(colors);
   const [state, setState] = useState<DatabaseContextValue>({
     db: null,
     initialized: false,
@@ -76,8 +80,8 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
 
   if (state.error) {
     return (
-      <Screen style={styles.centeredScreen}>
-        <AppCard accessibilityRole="alert" style={styles.statusCard}>
+      <Screen style={[styles.centeredScreen, { backgroundColor: colors.background }]}>
+        <AppCard accessibilityRole="alert" style={[styles.statusCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={styles.iconContainer}>
             <Database color={colors.primaryDark} size={30} strokeWidth={2} />
           </View>
@@ -101,18 +105,7 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
   }
 
   if (!state.initialized) {
-    return (
-      <Screen style={styles.centeredScreen}>
-        <View
-          accessibilityLabel="Preparando seus dados"
-          accessibilityRole="progressbar"
-          style={styles.loadingContent}
-        >
-          <ActivityIndicator color={colors.primaryDark} size="large" />
-          <AppText muted>Preparando seus dados...</AppText>
-        </View>
-      </Screen>
-    );
+    return <BrandSplashScreen />;
   }
 
   return (
@@ -122,7 +115,7 @@ export function DatabaseProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   centeredScreen: {
     justifyContent: "center",
   },
@@ -145,10 +138,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   statusMessage: {
+    color: colors.textMuted,
     marginBottom: spacing.xl,
-  },
-  loadingContent: {
-    alignItems: "center",
-    gap: spacing.md,
   },
 });

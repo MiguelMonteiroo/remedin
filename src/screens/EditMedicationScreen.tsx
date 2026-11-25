@@ -5,11 +5,12 @@ import { AppText } from "../components/ui/AppText";
 import { Screen } from "../components/ui/Screen";
 import { RootStackParamList } from "../navigation/types";
 import { useAppData } from "../services/appDataProvider";
-import { colors } from "../theme/colors";
+import { useAppTheme } from "../theme/ThemeProvider";
 
 type Props = NativeStackScreenProps<RootStackParamList, "EditMedication">;
 
 export function EditMedicationScreen({ route, navigation }: Props) {
+  const { colors } = useAppTheme();
   const { medicationId } = route.params;
   const { medications, schedules, updateMedicationWithSchedule } = useAppData();
   const medication = medications.find((item) => item.id === medicationId);
@@ -19,8 +20,8 @@ export function EditMedicationScreen({ route, navigation }: Props) {
 
   if (!medication) {
     return (
-      <Screen style={styles.center}>
-        <AppText variant="subheading" style={styles.error}>Medicamento não encontrado.</AppText>
+      <Screen style={[styles.center, { backgroundColor: colors.background }]}>
+        <AppText variant="subheading" style={[styles.error, { color: colors.danger }]}>Medicamento não encontrado.</AppText>
       </Screen>
     );
   }
@@ -61,5 +62,5 @@ export function EditMedicationScreen({ route, navigation }: Props) {
 
 const styles = StyleSheet.create({
   center: { alignItems: "center", justifyContent: "center" },
-  error: { color: colors.danger, textAlign: "center" },
+  error: { textAlign: "center" },
 });

@@ -253,30 +253,30 @@ describe("reminder synchronization", () => {
     }
   );
 
-  it("recreates a snoozed alarm at snoozedUntil after restart", async () => {
+  it.each([false, true])("recreates a snoozed alarm after restart (across midnight: %s)", async (acrossMidnight) => {
     const { db, close } = createTestDatabase();
+    const now = jest.spyOn(Date, "now").mockReturnValue(new Date("2026-08-15T00:02:00").getTime());
 
     try {
       await migrateDbIfNeeded(db);
       const repos = createRepositories(db);
       const persistence = createMedicationPersistenceService(db);
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const date = localDate(tomorrow);
+      const date = acrossMidnight ? "2026-08-14" : "2026-08-15";
+      const time = acrossMidnight ? "23:59" : "00:01";
       const medication: Medication = {
         id: "med-snoozed",
         name: "Losartana",
         dosage: "50 mg",
         notes: "",
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: "2026-08-01T00:00:00",
+        updatedAt: "2026-08-01T00:00:00",
         isPaused: false,
       };
       const schedule: MedicationSchedule = {
         id: "schedule-snoozed",
         medicationId: medication.id,
         kind: "dailyTimes",
-        times: ["12:00"],
+        times: [time],
         intervalHours: 0,
         weekdays: [],
         startDate: "",
@@ -286,7 +286,7 @@ describe("reminder synchronization", () => {
         isActive: true,
       };
       const occurrenceId = `${medication.id}-${schedule.id}-${date}-0`;
-      const snoozedUntil = `${date}T12:05:00`;
+      const snoozedUntil = "2026-08-15T00:04:00";
       await persistence.createWithSchedule(medication, schedule);
       await repos.settings.update({
         notificationsEnabled: true,
@@ -336,6 +336,7 @@ describe("reminder synchronization", () => {
         })
       );
     } finally {
+      now.mockRestore();
       close();
     }
   });

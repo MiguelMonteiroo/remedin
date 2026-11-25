@@ -1,5 +1,5 @@
 import type { NativeDB } from "../nativeDb";
-import { ReminderSettings } from "../../types/domain";
+import { PROFILE_AVATARS, type ReminderSettings } from "../../types/domain";
 import { DEFAULT_REMINDER_SETTINGS } from "../../utils/defaultReminderSettings";
 
 const DEFAULT_SETTINGS = DEFAULT_REMINDER_SETTINGS;
@@ -20,6 +20,7 @@ export function createSettingsRepository(db: NativeDB) {
     for (const row of rows) {
       map[row.key] = row.value;
     }
+    const profileAvatar = PROFILE_AVATARS.find((avatar) => avatar === map.profileAvatar);
     return {
       notificationsEnabled:
         map.notificationsEnabled === "true" ||
@@ -31,45 +32,19 @@ export function createSettingsRepository(db: NativeDB) {
       showLockScreenDetails: map.showLockScreenDetails === "true",
       reminderSetupCompleted: map.reminderSetupCompleted === "true",
       onboardingCompleted: map.onboardingCompleted === "true",
+      ...(profileAvatar && { profileAvatar }),
+      ...(map.onboardingIntroSeen === "true" && { onboardingIntroSeen: true }),
     };
   }
 
-  async function update(settings: ReminderSettings): Promise<void> {
-    const entries: Array<[string, string]> = [
-      [
-        "notificationsEnabled",
-        settings.notificationsEnabled ? "true" : "false",
-      ],
-      ["defaultSnoozeMinutes", settings.defaultSnoozeMinutes.toString()],
-      ["userName", settings.userName],
-      [
-        "fullScreenAlarmEnabled",
-        settings.fullScreenAlarmEnabled ? "true" : "false",
-      ],
-      [
-        "criticalAlertsEnabled",
-        settings.criticalAlertsEnabled ? "true" : "false",
-      ],
-      [
-        "showLockScreenDetails",
-        settings.showLockScreenDetails ? "true" : "false",
-      ],
-      [
-        "reminderSetupCompleted",
-        settings.reminderSetupCompleted ? "true" : "false",
-      ],
-      [
-        "onboardingCompleted",
-        settings.onboardingCompleted ? "true" : "false",
-      ],
-    ];
-
+  async function update(settings: Partial<ReminderSettings>): Promise<void> {
     await db.withTransactionAsync(async (transaction) => {
-      for (const [key, value] of entries) {
+      for (const [key, value] of Object.entries(settings)) {
+        if (value === undefined) continue;
         await transaction.runAsync(
           "INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?)",
           key,
-          value
+          String(value)
         );
       }
     });

@@ -2,6 +2,7 @@ import React from "react";
 // @ts-expect-error react-test-renderer does not ship declarations in this project.
 import TestRenderer, { act } from "react-test-renderer";
 import { WheelTimePicker } from "../../components/WheelTimePicker";
+import { AppThemeProvider } from "../../theme/ThemeProvider";
 
 describe("WheelTimePicker concurrent adjustments", () => {
   it("combines hour and minute changes made before the next render", async () => {
@@ -10,7 +11,7 @@ describe("WheelTimePicker concurrent adjustments", () => {
 
     await act(async () => {
       renderer = TestRenderer.create(
-        <WheelTimePicker value="08:00" onChange={onChange} />
+        <AppThemeProvider><WheelTimePicker value="08:00" onChange={onChange} /></AppThemeProvider>
       );
     });
 
