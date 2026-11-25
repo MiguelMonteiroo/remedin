@@ -21,6 +21,7 @@ Em outro terminal, rode `npm run android`. No menu de desenvolvimento, **Telas d
 | Telas, componentes e navegação | [src/screens](src/screens), [src/components](src/components), [src/navigation](src/navigation) |
 | Marca, temas e tipografia | [DESIGN.md](DESIGN.md), [src/theme](src/theme), [RemedinBrand.tsx](src/components/brand/RemedinBrand.tsx) |
 | Perfil local e avatares | [ProfileAvatarPicker.tsx](src/components/ProfileAvatarPicker.tsx), [preview/assets/avatars](preview/assets/avatars) |
+| Primeiro acesso e permissões do Android | [FirstRunOnboarding.tsx](src/components/onboarding/FirstRunOnboarding.tsx), [useOnboardingPermissions.ts](src/components/onboarding/useOnboardingPermissions.ts) |
 | Persistência e migrações | [src/database](src/database) |
 | Doses, permissões e conciliação de lembretes | [src/services](src/services), [src/services/reminders](src/services/reminders) |
 | Serviço de áudio, AlarmManager e reinicialização | [android/app/src/main/java/com/remedin](android/app/src/main/java/com/remedin) |

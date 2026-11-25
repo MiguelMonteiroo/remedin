@@ -1,9 +1,13 @@
 import React from "react";
-import { TextInput, useColorScheme } from "react-native";
+import { AppState, TextInput, useColorScheme } from "react-native";
 // @ts-expect-error react-test-renderer does not ship declarations in this project.
 import TestRenderer, { act } from "react-test-renderer";
 import { BrandSplashScreen } from "../../components/onboarding/BrandSplashScreen";
 import { FirstRunOnboarding } from "../../components/onboarding/FirstRunOnboarding";
+import {
+  getReminderPermissionState,
+  openExactAlarmSettings,
+} from "../../services/notificationPermissionService";
 import { AppThemeProvider } from "../ThemeProvider";
 
 jest.mock("react-native/Libraries/Utilities/useColorScheme", () => ({
@@ -213,6 +217,49 @@ describe("Brand splash and local onboarding", () => {
 
     expect(mockCompleteOnboarding).toHaveBeenCalledWith("Helena Costa");
     await act(async () => renderer.unmount());
+  });
+
+  it("checks exact alarm permission when returning from Android settings", async () => {
+    const permissionState = jest.mocked(getReminderPermissionState);
+    const granted = await permissionState();
+    permissionState.mockResolvedValueOnce({ ...granted, exactAlarms: "denied" });
+
+    let renderer!: ReturnType<typeof TestRenderer.create>;
+    await act(async () => {
+      renderer = TestRenderer.create(
+        <AppThemeProvider>
+          <FirstRunOnboarding initialStep="exact" />
+        </AppThemeProvider>
+      );
+    });
+
+    const remove = jest.fn();
+    const addEventListener = jest.spyOn(AppState, "addEventListener")
+      .mockReturnValueOnce({ remove });
+    try {
+      const allowExact = renderer.root.findByProps({
+        accessibilityRole: "button",
+        accessibilityLabel: "Permitir horário exato",
+      });
+      await act(async () => {
+        await (allowExact.props.onClick ?? allowExact.props.onPress)();
+      });
+      expect(openExactAlarmSettings).toHaveBeenCalledTimes(1);
+      expect(JSON.stringify(renderer.toJSON())).toContain("Passo 2 de 3");
+
+      expect(addEventListener).toHaveBeenCalledWith("change", expect.any(Function));
+      const [, handleAppState] = addEventListener.mock.calls[0];
+      await act(async () => { await handleAppState("background"); });
+      expect(permissionState).toHaveBeenCalledTimes(2);
+      await act(async () => { await handleAppState("active"); });
+
+      expect(permissionState).toHaveBeenCalledTimes(3);
+      expect(JSON.stringify(renderer.toJSON())).toContain("Permitir tela cheia");
+      expect(remove).toHaveBeenCalledTimes(1);
+    } finally {
+      await act(async () => renderer.unmount());
+      addEventListener.mockRestore();
+    }
   });
 
   it("exits directly to Home when the user skips notifications and confirms 'Continuar sem lembretes'", async () => {
