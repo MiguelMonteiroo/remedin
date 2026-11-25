@@ -1,5 +1,5 @@
-import { Text, TextProps, StyleSheet } from "react-native";
-import { colors } from "../../theme/colors";
+import { Text, TextProps } from "react-native";
+import { useAppTheme } from "../../theme/ThemeProvider";
 import { fontFamilies, typography } from "../../theme/typography";
 
 type Variant =
@@ -27,6 +27,7 @@ export function AppText({
   maxFontSizeMultiplier = 1.5,
   ...props
 }: Props) {
+  const { colors } = useAppTheme();
   const resolvedWeight = weight ?? DEFAULT_WEIGHTS[variant];
 
   return (
@@ -34,10 +35,9 @@ export function AppText({
       {...props}
       maxFontSizeMultiplier={maxFontSizeMultiplier}
       style={[
-        styles.base,
+        { color: muted ? colors.textMuted : colors.text },
         typography[variant],
         { fontFamily: fontFamilies[resolvedWeight] },
-        muted && styles.muted,
         style,
       ]}
     />
@@ -53,12 +53,3 @@ const DEFAULT_WEIGHTS: Record<Variant, Weight> = {
   small: "regular",
   caption: "medium",
 };
-
-const styles = StyleSheet.create({
-  base: {
-    color: colors.text,
-  },
-  muted: {
-    color: colors.textMuted,
-  },
-});

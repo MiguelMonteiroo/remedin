@@ -4,6 +4,7 @@ import { StyleSheet, Text, useColorScheme } from "react-native";
 import TestRenderer, { act } from "react-test-renderer";
 import { CareDoseActionCard } from "../../components/CareDoseActionCard";
 import { CareHeader } from "../../components/CareHeader";
+import { ProfileAvatarImage } from "../../components/ProfileAvatarPicker";
 import { DailyProgressSummary } from "../../components/DailyProgressSummary";
 import { AppThemeProvider } from "../ThemeProvider";
 import { themes } from "../theme";
@@ -65,6 +66,7 @@ it("renders CareHeader with horizontal signature and clickable profile avatar", 
     renderer = TestRenderer.create(
       <AppThemeProvider>
         <CareHeader
+          avatar="capybara"
           title="Bom dia, Helena"
           subtitle="Seu cuidado de hoje"
           initials="H"
@@ -78,6 +80,7 @@ it("renders CareHeader with horizontal signature and clickable profile avatar", 
     accessibilityRole: "button",
     accessibilityLabel: "Abrir perfil e configurações",
   });
+  expect(avatarBtn.findByType(ProfileAvatarImage).props.avatar).toBe("capybara");
   await act(async () => avatarBtn.props.onPress());
   expect(onAvatarPress).toHaveBeenCalledTimes(1);
   await act(async () => renderer.unmount());

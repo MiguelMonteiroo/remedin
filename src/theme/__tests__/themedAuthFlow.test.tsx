@@ -3,7 +3,6 @@ import { TextInput, useColorScheme } from "react-native";
 // @ts-expect-error react-test-renderer does not ship declarations in this project.
 import TestRenderer, { act } from "react-test-renderer";
 import { BrandSplashScreen } from "../../components/onboarding/BrandSplashScreen";
-import { AuthFlowScreen } from "../../components/onboarding/AuthFlowScreen";
 import { FirstRunOnboarding } from "../../components/onboarding/FirstRunOnboarding";
 import { AppThemeProvider } from "../ThemeProvider";
 
@@ -22,10 +21,8 @@ jest.mock("react-native-safe-area-context", () => {
   };
 });
 
-const mockSignUpWithEmail = jest.fn().mockResolvedValue(undefined);
-const mockSignInWithEmail = jest.fn().mockResolvedValue(undefined);
-const mockSignInWithGoogle = jest.fn().mockResolvedValue(undefined);
-const mockResetAccountPassword = jest.fn().mockResolvedValue(undefined);
+const mockUpdateProfile = jest.fn().mockResolvedValue(undefined);
+let mockUserName = "Helena Costa";
 const mockCompleteOnboarding = jest.fn().mockResolvedValue(undefined);
 const mockUpdateNotificationsEnabled = jest.fn().mockResolvedValue(undefined);
 const mockUpdateReminderSettings = jest.fn().mockResolvedValue(undefined);
@@ -51,36 +48,27 @@ jest.mock("../../services/notificationPermissionService", () => ({
 
 jest.mock("../../services/appDataProvider", () => ({
   useAppData: () => ({
-    savedAccounts: [],
-    userAccount: {
-      authenticated: true,
-      name: "Helena Costa",
-      email: "helena@email.com",
-      provider: "email",
-    },
     settings: {
       notificationsEnabled: false,
       defaultSnoozeMinutes: 5,
-      userName: "Helena Costa",
+      userName: mockUserName,
       fullScreenAlarmEnabled: false,
       criticalAlertsEnabled: false,
       showLockScreenDetails: false,
       reminderSetupCompleted: false,
       onboardingCompleted: false,
     },
-    signUpWithEmail: mockSignUpWithEmail,
-    signInWithEmail: mockSignInWithEmail,
-    signInWithGoogle: mockSignInWithGoogle,
-    resetAccountPassword: mockResetAccountPassword,
+    updateProfile: mockUpdateProfile,
     completeOnboarding: mockCompleteOnboarding,
     updateNotificationsEnabled: mockUpdateNotificationsEnabled,
     updateReminderSettings: mockUpdateReminderSettings,
   }),
 }));
 
-describe("Phase 1 & Phase 2: Splash, Auth Flow, and Streamlined Onboarding", () => {
+describe("Brand splash and local onboarding", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockUserName = "Helena Costa";
   });
 
   it("renders BrandSplashScreen with Coral identity and status copy", async () => {
@@ -101,84 +89,32 @@ describe("Phase 1 & Phase 2: Splash, Auth Flow, and Streamlined Onboarding", () 
     await act(async () => renderer.unmount());
   });
 
-  it.each(["light", "dark"] as const)(
-    "renders AuthFlowScreen welcome stage with 3 pill actions in %s theme",
-    async (scheme) => {
-      (useColorScheme as jest.MockedFunction<typeof useColorScheme>).mockReturnValue(scheme);
-      let renderer!: ReturnType<typeof TestRenderer.create>;
-      await act(async () => {
-        renderer = TestRenderer.create(
-          <AppThemeProvider>
-            <AuthFlowScreen />
-          </AppThemeProvider>
-        );
-      });
-
-      const buttons = renderer.root.findAllByProps({ accessibilityRole: "button" });
-      const labels = buttons.map(
-        (node: { props: { accessibilityLabel?: string } }) => node.props.accessibilityLabel
-      );
-      expect(labels).toContain("Continuar com o Google");
-      expect(labels).toContain("Criar uma conta");
-      expect(labels).toContain("Entrar com minha conta");
-      await act(async () => renderer.unmount());
-    }
-  );
-
-  it("navigates to Criar Conta (03A) and submits name, email, and password", async () => {
-    (useColorScheme as jest.MockedFunction<typeof useColorScheme>).mockReturnValue("light");
+  it("opens local profile setup from welcome and saves the selected avatar", async () => {
+    mockUserName = "";
     let renderer!: ReturnType<typeof TestRenderer.create>;
     await act(async () => {
       renderer = TestRenderer.create(
         <AppThemeProvider>
-          <AuthFlowScreen />
+          <FirstRunOnboarding />
         </AppThemeProvider>
       );
     });
 
-    const createAccountBtn = renderer.root.findByProps({
-      accessibilityRole: "button",
-      accessibilityLabel: "Criar uma conta",
-    });
+    expect(JSON.stringify(renderer.toJSON())).toContain("Seus dados ficam neste aparelho.");
+    const start = renderer.root.findByProps({ accessibilityRole: "button", accessibilityLabel: "Começar" });
+    await act(async () => { (start.props.onClick ?? start.props.onPress)(); });
 
+    const name = renderer.root.findByType(TextInput);
+    const avatar = renderer.root.findByProps({ accessibilityRole: "radio", accessibilityLabel: "Capivara" });
     await act(async () => {
-      createAccountBtn.props.onClick?.() ?? createAccountBtn.props.onPress?.();
+      name.props.onChangeText("Helena Costa");
+      (avatar.props.onClick ?? avatar.props.onPress)();
     });
+    const next = renderer.root.findByProps({ accessibilityRole: "button", accessibilityLabel: "Continuar" });
+    await act(async () => { await (next.props.onClick ?? next.props.onPress)(); });
 
-    const inputs = renderer.root.findAllByType(TextInput);
-    const nameInput = inputs.find(
-      (node: { props: { accessibilityLabel?: string } }) =>
-        node.props.accessibilityLabel === "Como podemos chamar você"
-    );
-    const emailInput = inputs.find(
-      (node: { props: { accessibilityLabel?: string } }) =>
-        node.props.accessibilityLabel === "Seu e-mail"
-    );
-    const passInput = inputs.find(
-      (node: { props: { accessibilityLabel?: string } }) =>
-        node.props.accessibilityLabel === "Crie uma senha"
-    );
-
-    await act(async () => {
-      nameInput.props.onChangeText("Helena Costa");
-      emailInput.props.onChangeText("helena@email.com");
-      passInput.props.onChangeText("senha123");
-    });
-
-    const submitBtn = renderer.root.findByProps({
-      accessibilityRole: "button",
-      accessibilityLabel: "Criar conta",
-    });
-
-    await act(async () => {
-      await (submitBtn.props.onClick?.() ?? submitBtn.props.onPress?.());
-    });
-
-    expect(mockSignUpWithEmail).toHaveBeenCalledWith(
-      "Helena Costa",
-      "helena@email.com",
-      "senha123"
-    );
+    expect(mockUpdateProfile).toHaveBeenCalledWith("Helena Costa", "capybara");
+    expect(JSON.stringify(renderer.toJSON())).toContain("Olá, Helena");
     await act(async () => renderer.unmount());
   });
 

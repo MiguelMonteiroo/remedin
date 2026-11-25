@@ -8,7 +8,7 @@ import { SectionHeader } from "../components/ui/SectionHeader";
 import { StatusBadge, type BadgeStatus } from "../components/ui/StatusBadge";
 import { useAppData } from "../services/appDataProvider";
 import {
-  buildDailyAdherenceSummary,
+  buildAdherenceHistory,
   type DailyAdherenceSummary,
   formatHistoryActionDateTime,
   formatHistoryDayLabel,
@@ -26,14 +26,12 @@ export function HistoryScreen() {
   const styles = createStyles(colors);
   const { medications, schedules, doseLogs: logs, loading } = useAppData();
   const now = new Date();
-  const dailySummaries = getLast7Days(now).map((date) =>
-    buildDailyAdherenceSummary(date, medications, schedules, logs, now)
-  );
-  const recentLogs = [...logs].sort((left, right) => right.actionAt.localeCompare(left.actionAt)).slice(0, 10);
+  const dailySummaries = buildAdherenceHistory(getLast7Days(now), medications, schedules, logs, now);
+  const recentLogs = logs.slice(0, 10);
 
   if (loading) {
     return (
-      <Screen style={[styles.center, { backgroundColor: colors.background }]}>
+      <Screen edges={["top", "left", "right"]} style={[styles.center, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
         <AppText muted style={[styles.loadingText, { color: colors.textMuted }]}>{ptBR.history.loading}</AppText>
       </Screen>
@@ -41,7 +39,7 @@ export function HistoryScreen() {
   }
 
   return (
-    <Screen style={{ backgroundColor: colors.background }}>
+    <Screen edges={["top", "left", "right"]} style={{ backgroundColor: colors.background }}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={styles.headerBlock}>
           <AppText variant="caption" weight="bold" style={styles.eyebrow}>
@@ -181,7 +179,7 @@ function actionToStatus(action: DoseLog["action"]): BadgeStatus {
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
   center: { alignItems: "center", justifyContent: "center" },
   loadingText: { marginTop: spacing.md },
-  content: { paddingBottom: 124 },
+  content: { paddingBottom: spacing.xl },
   headerBlock: { marginBottom: spacing.lg },
   eyebrow: {
     color: colors.primary,

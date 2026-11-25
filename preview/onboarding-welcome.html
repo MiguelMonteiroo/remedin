@@ -54,8 +54,7 @@
       top: 0; left: 0;
       width: 100%;
       height: 65%;
-      object-fit: cover;
-      object-position: center top;
+      background: radial-gradient(ellipse at top, #263b52, #101a24 72%);
       transform-origin: top center;
       transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
       will-change: transform;
@@ -337,7 +336,7 @@
     <div class="phone">
 
       <!-- CINEMATIC BG -->
-      <img id="ambient-bg" src="../assets/mascot-canonical.jpg" class="ambient-bg" alt="Remedin mascote" />
+      <div id="ambient-bg" class="ambient-bg" aria-hidden="true"></div>
       <div class="top-gradient"></div>
       <div class="bottom-gradient"></div>
 

@@ -1,15 +1,18 @@
 import { Pressable, StyleSheet, View } from "react-native";
 import { RemedinHorizontalSignature } from "./brand/RemedinBrand";
+import { ProfileAvatarImage } from "./ProfileAvatarPicker";
 import { AppText } from "./ui/AppText";
 import { useAppTheme } from "../theme/ThemeProvider";
 import { type ThemeColors } from "../theme/theme";
 import { radii } from "../theme/radii";
 import { spacing } from "../theme/spacing";
+import type { ProfileAvatar } from "../types/domain";
 
 type Props = {
   title: string;
   subtitle: string;
   initials?: string;
+  avatar?: ProfileAvatar;
   onAvatarPress?: () => void;
 };
 
@@ -17,10 +20,14 @@ export function CareHeader({
   title,
   subtitle,
   initials = "M",
+  avatar,
   onAvatarPress,
 }: Props) {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
+  const profileImage = avatar
+    ? <ProfileAvatarImage avatar={avatar} size={49} />
+    : <AppText weight="bold" style={styles.avatarText}>{initials}</AppText>;
 
   return (
     <View style={styles.wrapper}>
@@ -49,16 +56,10 @@ export function CareHeader({
               pressed && styles.avatarPressed,
             ]}
           >
-            <AppText weight="bold" style={styles.avatarText}>
-              {initials}
-            </AppText>
+            {profileImage}
           </Pressable>
         ) : (
-          <View style={styles.avatar}>
-            <AppText weight="bold" style={styles.avatarText}>
-              {initials}
-            </AppText>
-          </View>
+          <View style={styles.avatar}>{profileImage}</View>
         )}
       </View>
     </View>

@@ -256,13 +256,17 @@ class MedicationAlarmService : Service() {
         .setContentTitle(title)
         .setContentText(body)
         .setCategory(Notification.CATEGORY_ALARM)
+        .setGroup(ACTIVE_ALARM_GROUP)
         .setContentIntent(activityPendingIntent)
-        .setFullScreenIntent(activityPendingIntent, canLaunchFullScreen(primary))
         .setVisibility(if (showDetails) Notification.VISIBILITY_PUBLIC else Notification.VISIBILITY_PRIVATE)
         .setLocalOnly(true)
         .setOngoing(true)
         .setOnlyAlertOnce(true)
         .setPriority(Notification.PRIORITY_MAX)
+
+    if (canLaunchFullScreen(primary)) {
+      builder.setFullScreenIntent(activityPendingIntent, true)
+    }
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
       builder.setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE)
@@ -290,10 +294,7 @@ class MedicationAlarmService : Service() {
             Intent.FLAG_ACTIVITY_NEW_TASK or
                 Intent.FLAG_ACTIVITY_CLEAR_TOP or
                 Intent.FLAG_ACTIVITY_SINGLE_TOP
-        putExtra(MainActivity.EXTRA_ALARM_MODE, true)
         putExtra(EXTRA_ALARM_ID, alarmId)
-        putExtra(EXTRA_TIMEOUT_MILLIS, payload.getLong(EXTRA_TIMEOUT_MILLIS, ALARM_TIMEOUT_MS))
-        putExtra(NOTIFICATION_EXTRA, notificationBundle(payload))
       }
 
   private fun notificationBundle(payload: Bundle): Bundle =
@@ -480,7 +481,6 @@ class MedicationAlarmService : Service() {
     const val EXTRA_ALARM_ID = "alarmId"
     const val EXTRA_TIMEOUT_MILLIS = "timeoutMillis"
     const val EXTRA_ALARM_PAYLOAD = "nativeAlarmPayload"
-    const val NOTIFICATION_EXTRA = "notification"
     const val FOREGROUND_ALARM_EVENT = "RemedinNativeAlarmDelivered"
     const val ALARM_TIMEOUT_MS = 60_000L
     private const val MIN_TIMEOUT_MS = 1_000L
@@ -488,8 +488,15 @@ class MedicationAlarmService : Service() {
     private const val NORMAL_CHANNEL_ID = "medication-dose-alarms-player-v1"
     private const val CRITICAL_CHANNEL_ID = "medication-dose-alarms-player-critical-v1"
     private const val SERVICE_NOTIFICATION_ID = 0x4D4D
+    private const val ACTIVE_ALARM_GROUP = "remedin.active-alarm"
 
     @Volatile private var activeInstance: MedicationAlarmService? = null
+
+    fun getActiveAlarmScreenPayload(alarmId: String): Bundle? {
+      val service = activeInstance ?: return null
+      val payload = synchronized(service.activeAlarms) { service.activeAlarms[alarmId]?.let(::Bundle) }
+      return payload?.let(service::alarmScreenPayload)
+    }
 
     fun cancelActiveAlarm(alarmId: String) {
       activeInstance?.removeActiveAlarm(alarmId)

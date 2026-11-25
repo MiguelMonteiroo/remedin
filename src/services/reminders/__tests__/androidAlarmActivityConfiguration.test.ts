@@ -10,6 +10,13 @@ function projectFile(relativePath: string): string {
 }
 
 describe("MainActivity alarm mode configuration", () => {
+  it("configures screen restoration before Android recreates the activity", () => {
+    const activity = projectFile("android/app/src/main/java/com/remedin/MainActivity.kt");
+    const factory = "supportFragmentManager.fragmentFactory = RNScreensFragmentFactory()";
+    expect(activity).toContain(factory);
+    expect(activity.indexOf(factory)).toBeLessThan(activity.indexOf("super.onCreate(savedInstanceState)"));
+  });
+
   it("keeps lock-screen behavior dynamic and uses the main React component", () => {
     const manifest = projectFile("android/app/src/main/AndroidManifest.xml");
     const activity = projectFile(
@@ -40,7 +47,8 @@ describe("MainActivity alarm mode configuration", () => {
     expect(activity).toContain('"initialAlarmPayload"');
     expect(activity).toContain('"RemedinNativeAlarmDelivered"');
     expect(activity).toContain("consumePendingAlarmPayload");
-    expect(activity).toContain("isAlarmPayload(payload)");
+    expect(activity).toContain("payload.takeIf(::isAlarmPayload)");
+    expect(activity).toContain("MedicationAlarmService.getActiveAlarmScreenPayload(alarmId)");
     expect(activity).toContain("validatedAlarmPayload(intent)");
   });
 
@@ -53,9 +61,8 @@ describe("MainActivity alarm mode configuration", () => {
     expect(activity).toContain("setShowWhenLocked(false)");
     expect(activity).toContain("showSystemBars()");
     expect(activity).toContain("clearAlarmIntent()");
-    expect(activity).toContain("removeExtra(EXTRA_ALARM_MODE)");
     expect(activity).toContain(
-      "removeExtra(MedicationAlarmService.NOTIFICATION_EXTRA)"
+      "removeExtra(MedicationAlarmService.EXTRA_ALARM_ID)"
     );
   });
 });

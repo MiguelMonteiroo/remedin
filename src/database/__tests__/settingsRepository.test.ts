@@ -92,4 +92,28 @@ describe("settings repository", () => {
       close();
     }
   });
+
+  it("persists profile and intro progress alongside existing reminder settings", async () => {
+    const { db, close } = createTestDatabase();
+
+    try {
+      await migrateDbIfNeeded(db);
+      const repository = createSettingsRepository(db);
+      await repository.update(updatedSettings);
+      await repository.update({ userName: "Helena", profileAvatar: "owl" });
+      await repository.update({ onboardingIntroSeen: true });
+      await repository.update({ userName: "Lena" });
+      await repository.update({ notificationsEnabled: false });
+
+      await expect(repository.get()).resolves.toEqual({
+        ...updatedSettings,
+        notificationsEnabled: false,
+        userName: "Lena",
+        profileAvatar: "owl",
+        onboardingIntroSeen: true,
+      });
+    } finally {
+      close();
+    }
+  });
 });

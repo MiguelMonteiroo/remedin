@@ -6,13 +6,13 @@ import {
   Bell,
   Info,
   LockKeyhole,
-  LogOut,
   Maximize2,
   TestTube2,
   UserRound,
   Volume2,
 } from "lucide-react-native";
 import { AppButton } from "../components/ui/AppButton";
+import { ProfileAvatarImage, ProfileAvatarPicker } from "../components/ProfileAvatarPicker";
 import { AppCard } from "../components/ui/AppCard";
 import { AppText } from "../components/ui/AppText";
 import { Screen } from "../components/ui/Screen";
@@ -33,7 +33,7 @@ import {
   openNativeAlarmChannelSettings,
   requestNotificationPermission,
 } from "../services/notificationPermissionService";
-import type { AuthProviderKind, ReminderPermissionState } from "../types/domain";
+import type { ProfileAvatar, ReminderPermissionState } from "../types/domain";
 import { validateProfileName } from "../utils/validation";
 import { useAppTheme } from "../theme/ThemeProvider";
 import { type ThemeColors } from "../theme/theme";
@@ -53,9 +53,7 @@ export function SettingsScreen() {
   const styles = createStyles(colors);
   const {
     settings,
-    userAccount,
-    updateUserName,
-    signOut,
+    updateProfile,
     updateNotificationsEnabled,
     updateReminderSettings,
     runAlarmTest,
@@ -67,6 +65,7 @@ export function SettingsScreen() {
   const [loading, setLoading] = useState(true);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(settings.userName);
+  const [avatarDraft, setAvatarDraft] = useState(settings.profileAvatar);
   const [nameError, setNameError] = useState("");
   const [alarmTestMessage, setAlarmTestMessage] = useState("");
 
@@ -82,7 +81,6 @@ export function SettingsScreen() {
     return readiness;
   }, [settings.criticalAlertsEnabled, settings.notificationsEnabled]);
 
-  useEffect(() => setNameDraft(settings.userName), [settings.userName]);
   useEffect(() => {
     if (!alarmTestMessage) return;
     const timer = setTimeout(() => setAlarmTestMessage(""), 8_000);
@@ -169,9 +167,13 @@ export function SettingsScreen() {
       setNameError(error);
       return;
     }
-    await updateUserName(nameDraft);
-    setNameError("");
-    setEditingName(false);
+    try {
+      await updateProfile(nameDraft, avatarDraft);
+      setNameError("");
+      setEditingName(false);
+    } catch {
+      setNameError("Não foi possível salvar seu perfil. Tente novamente.");
+    }
   }
 
   async function handleAlarmTest() {
@@ -280,12 +282,9 @@ export function SettingsScreen() {
   }
 
   return (
-    <Screen style={{ backgroundColor: colors.background }}>
+    <Screen edges={["top", "left", "right"]} style={{ backgroundColor: colors.background }}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <View style={styles.headerBlock}>
-          <AppText variant="caption" weight="bold" style={styles.eyebrow}>
-            SUA CONTA E APARELHO
-          </AppText>
           <AppText accessibilityRole="header" variant="title" style={styles.title}>
             {ptBR.profile.title}
           </AppText>
@@ -299,17 +298,21 @@ export function SettingsScreen() {
         ) : null}
 
         <ProfileNamePanel
+          avatar={settings.profileAvatar}
+          avatarDraft={avatarDraft}
           editing={editingName}
-          email={userAccount?.email}
           error={nameError}
           name={settings.userName}
           nameDraft={nameDraft}
-          onCancel={() => { setNameDraft(settings.userName); setNameError(""); setEditingName(false); }}
+          onAvatarChange={setAvatarDraft}
+          onCancel={() => { setNameError(""); setEditingName(false); }}
           onChange={(value) => { setNameDraft(value); if (nameError) setNameError(""); }}
-          onEdit={() => setEditingName(true)}
+          onEdit={() => {
+            setNameDraft(settings.userName);
+            setAvatarDraft(settings.profileAvatar);
+            setEditingName(true);
+          }}
           onSave={handleSaveName}
-          onSignOut={userAccount?.authenticated ? signOut : undefined}
-          provider={userAccount?.provider}
         />
 
         <SectionHeader title={ptBR.profile.remindersTitle} meta={ptBR.profile.remindersMeta} />
@@ -343,51 +346,47 @@ export function SettingsScreen() {
 }
 
 type ProfileProps = {
+  avatar?: ProfileAvatar;
+  avatarDraft?: ProfileAvatar;
   editing: boolean;
-  email?: string;
   error: string;
   name: string;
   nameDraft: string;
+  onAvatarChange: (value: ProfileAvatar) => void;
   onCancel: () => void;
   onChange: (value: string) => void;
   onEdit: () => void;
   onSave: () => void;
-  onSignOut?: () => Promise<void> | void;
-  provider?: AuthProviderKind | null;
 };
 
 function ProfileNamePanel({
+  avatar,
+  avatarDraft,
   editing,
-  email,
   error,
   name,
   nameDraft,
+  onAvatarChange,
   onCancel,
   onChange,
   onEdit,
   onSave,
-  onSignOut,
-  provider,
 }: ProfileProps) {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
-  const providerLabel =
-    provider === "google"
-      ? "Conta Google"
-      : provider === "email"
-        ? "Conta Remedin"
-        : "Seu nome";
+  const selectedAvatar = editing ? avatarDraft : avatar;
 
   return (
     <AppCard style={[styles.profileCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
       <View style={[styles.profileHeading, editing && styles.profileHeadingEditing]}>
-        <View style={styles.avatar}><UserRound color={colors.primaryDark} size={27} strokeWidth={2} /></View>
+        <View style={styles.avatar}>
+          {selectedAvatar
+            ? <ProfileAvatarImage avatar={selectedAvatar} size={52} />
+            : <UserRound color={colors.primaryDark} size={27} strokeWidth={2} />}
+        </View>
         <View style={styles.profileCopy}>
-          <AppText variant="caption" muted style={{ color: colors.textMuted }}>{providerLabel}</AppText>
-          {!editing ? <AppText variant="heading" style={styles.profileName}>{name}</AppText> : null}
-          {!editing && email ? (
-            <AppText variant="small" muted style={styles.profileEmail}>{email}</AppText>
-          ) : null}
+          <AppText variant="caption" style={{ color: colors.textMuted }}>Perfil neste aparelho</AppText>
+          {!editing ? <AppText variant="heading" style={styles.profileName}>{name || "Seu nome"}</AppText> : null}
         </View>
         {!editing ? <AppButton onPress={onEdit} size="compact" title="Editar" variant="ghost" /> : null}
       </View>
@@ -403,45 +402,28 @@ function ProfileNamePanel({
             value={nameDraft}
           />
           {error ? <AppText accessibilityRole="alert" variant="small" style={styles.nameError}>{error}</AppText> : null}
+          <ProfileAvatarPicker value={avatarDraft} onChange={onAvatarChange} />
           <View style={styles.editActions}>
             <AppButton onPress={onCancel} size="compact" style={styles.editButton} title="Cancelar" variant="ghost" />
             <AppButton disabled={Boolean(validateProfileName(nameDraft))} onPress={onSave} size="compact" style={styles.editButton} title="Salvar" />
           </View>
         </>
-      ) : onSignOut ? (
-        <View style={styles.signOutRow}>
-          <AppButton
-            accessibilityLabel="Sair da conta"
-            icon={LogOut}
-            onPress={() => void onSignOut()}
-            size="compact"
-            title="Sair da conta"
-            variant="ghost"
-          />
-        </View>
       ) : null}
     </AppCard>
   );
 }
 
 const createStyles = (colors: ThemeColors) => StyleSheet.create({
-  content: { paddingBottom: 124 },
+  content: { paddingBottom: spacing.xl },
   headerBlock: { marginBottom: spacing.lg },
-  eyebrow: {
-    color: colors.primary,
-    letterSpacing: 0.6,
-    marginBottom: 4,
-  },
   title: { color: colors.primaryDark },
   subtitle: { marginTop: spacing.xs },
   profileCard: { borderRadius: radii.lg, marginBottom: spacing.md, padding: spacing.lg },
   profileHeading: { alignItems: "center", flexDirection: "row" },
   profileHeadingEditing: { marginBottom: spacing.md },
-  avatar: { alignItems: "center", backgroundColor: colors.primarySoft, borderColor: colors.border, borderRadius: radii.md, borderWidth: 1, height: 54, justifyContent: "center", marginRight: spacing.md, width: 54 },
+  avatar: { alignItems: "center", backgroundColor: colors.primarySoft, borderColor: colors.border, borderRadius: 27, borderWidth: 1, height: 54, justifyContent: "center", marginRight: spacing.md, width: 54 },
   profileCopy: { flex: 1, marginRight: spacing.sm },
   profileName: { color: colors.primaryDark },
-  profileEmail: { color: colors.textMuted, marginTop: 2 },
-  signOutRow: { alignItems: "flex-start", borderTopColor: colors.border, borderTopWidth: 1, marginTop: spacing.md, paddingTop: spacing.md },
   input: { backgroundColor: colors.surface, borderColor: colors.borderStrong, borderRadius: radii.md, borderWidth: 1, color: colors.text, fontFamily: fontFamilies.regular, fontSize: 18, minHeight: 52, paddingHorizontal: spacing.md },
   inputError: { borderColor: colors.danger },
   nameError: { color: colors.danger, marginTop: spacing.sm },

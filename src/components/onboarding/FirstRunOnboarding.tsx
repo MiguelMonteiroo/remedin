@@ -20,7 +20,6 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock3,
-  HeartPulse,
   History,
   LockKeyhole,
   Maximize2,
@@ -48,22 +47,27 @@ import {
 import { validateProfileName } from "../../utils/validation";
 import { useReducedMotion } from "../../utils/useReducedMotion";
 import { RemedinHorizontalSignature } from "../brand/RemedinBrand";
+import { ProfileAvatarPicker } from "../ProfileAvatarPicker";
+import { OnboardingWelcome } from "./OnboardingWelcome";
 import { AppText } from "../ui/AppText";
 import { Screen } from "../ui/Screen";
 import { ConfirmationDialog } from "../ui/ConfirmationDialog";
 import { useAppTheme } from "../../theme/ThemeProvider";
 import { motionDurations, motionEasings } from "../../theme/motion";
 import { type ThemeColors } from "../../theme/theme";
+import type { ProfileAvatar } from "../../types/domain";
 import { radii } from "../../theme/radii";
 import { spacing } from "../../theme/spacing";
 import { fontFamilies } from "../../theme/typography";
 
-type Step =
+export type OnboardingStep =
   | "welcome"
   | "profile"
   | "guide"
   | EssentialOnboardingPermissionStep
   | "ready";
+
+type Step = OnboardingStep;
 
 type AwaitingCapability =
   | "notifications"
@@ -75,7 +79,13 @@ type AwaitingCapability =
 
 const CORAL_HEADER_BG = "#A44945";
 
-export function FirstRunOnboarding() {
+export function FirstRunOnboarding({
+  initialStep,
+  onPreviewFinish,
+}: {
+  initialStep?: OnboardingStep;
+  onPreviewFinish?: () => void;
+} = {}) {
   const { name: themeName, colors } = useAppTheme();
   const isDark = themeName === "dark";
   const styles = createStyles(colors);
@@ -83,19 +93,17 @@ export function FirstRunOnboarding() {
   const {
     completeOnboarding,
     settings,
-    userAccount,
+    updateProfile,
     updateNotificationsEnabled,
     updateReminderSettings,
   } = useAppData();
 
-  const initialName = (userAccount?.name || settings?.userName || "").trim();
-  const hasAuthenticatedProfile = Boolean(
-    userAccount?.authenticated || initialName
-  );
+  const initialName = settings.userName.trim();
   const [step, setStep] = useState<Step>(
-    hasAuthenticatedProfile ? "guide" : "welcome"
+    initialStep ?? (initialName ? "guide" : "welcome")
   );
   const [name, setName] = useState(initialName);
+  const [avatar, setAvatar] = useState<ProfileAvatar | undefined>(settings.profileAvatar);
   const [nameError, setNameError] = useState("");
   const [permissionMessage, setPermissionMessage] = useState("");
   const [notificationRequestAttempted, setNotificationRequestAttempted] =
@@ -157,11 +165,13 @@ export function FirstRunOnboarding() {
   }, [step]);
 
   async function finishOnboarding() {
+    if (onPreviewFinish) {
+      onPreviewFinish();
+      return;
+    }
     setBusy(true);
     try {
-      await completeOnboarding(
-        (name || userAccount?.name || settings?.userName || "").trim()
-      );
+      await completeOnboarding(name.trim());
     } finally {
       setBusy(false);
     }
@@ -250,14 +260,22 @@ export function FirstRunOnboarding() {
     return () => subscription.remove();
   }, [awaitingCapability, name, reduceMotion]);
 
-  function continueFromProfile() {
+  async function continueFromProfile() {
     const error = validateProfileName(name);
     if (error) {
       setNameError(error);
       return;
     }
     setNameError("");
-    transitionToStep("guide");
+    setBusy(true);
+    try {
+      if (!onPreviewFinish) await updateProfile(name, avatar);
+      transitionToStep("guide");
+    } catch {
+      setNameError("Não foi possível salvar seu perfil. Tente novamente.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function requestBasicNotifications() {
@@ -406,6 +424,10 @@ export function FirstRunOnboarding() {
 
   async function skipBasicNotifications() {
     setConfirmSkipVisible(false);
+    if (onPreviewFinish) {
+      onPreviewFinish();
+      return;
+    }
     setBusy(true);
     try {
       await updateNotificationsEnabled(false);
@@ -428,7 +450,8 @@ export function FirstRunOnboarding() {
 
   function handleBack() {
     if (busy) return;
-    if (step === "notifications") transitionToStep("guide");
+    if (step === "profile") transitionToStep("welcome");
+    else if (step === "notifications") transitionToStep("guide");
     else if (step === "exact") transitionToStep("notifications");
     else if (step === "fullScreen") transitionToStep("exact");
     else if (step === "ready") transitionToStep("fullScreen");
@@ -436,8 +459,7 @@ export function FirstRunOnboarding() {
 
   function handlePrimaryAction() {
     if (busy) return;
-    if (step === "welcome") transitionToStep("profile");
-    else if (step === "profile") continueFromProfile();
+    if (step === "profile") continueFromProfile();
     else if (step === "guide") transitionToStep("notifications");
     else if (step === "notifications") requestBasicNotifications();
     else if (step === "exact") requestExactAlarms();
@@ -446,9 +468,11 @@ export function FirstRunOnboarding() {
   }
 
   const primaryTitle = getPrimaryTitle(step, busy);
-  const firstName = (name || userAccount?.name || settings?.userName || "")
-    .trim()
-    .split(/\s+/)[0];
+  const firstName = name.trim().split(/\s+/)[0];
+
+  if (step === "welcome") {
+    return <OnboardingWelcome onContinue={() => transitionToStep("profile")} />;
+  }
 
   // SCREEN 04: GUIDE (Coral Header + Rounded Bottom Sheet + 3 Bento Cards)
   if (step === "guide") {
@@ -605,6 +629,18 @@ export function FirstRunOnboarding() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardArea}
       >
+        {step === "profile" ? (
+          <Pressable
+            accessibilityLabel="Voltar para boas-vindas"
+            accessibilityRole="button"
+            disabled={busy}
+            onPress={handleBack}
+            style={[styles.backPillButton, styles.profileBackButton]}
+          >
+            <ArrowLeft color={colors.primaryDark} size={20} />
+            <AppText style={styles.backPillText}>Voltar</AppText>
+          </Pressable>
+        ) : null}
         {isPermissionFlow ? (
           <View style={styles.editorialTopBar}>
             <View style={styles.editorialNavRow}>
@@ -671,11 +707,13 @@ export function FirstRunOnboarding() {
             }}
           >
             <OnboardingStepContent
+              avatar={avatar}
               batteryConfigured={batteryConfigured}
               busy={busy}
               dndConfigured={dndConfigured}
               name={name}
               nameError={nameError}
+              onAvatarChange={setAvatar}
               onConfigureBattery={requestBatteryAccess}
               onConfigureDnd={requestDoNotDisturbAccess}
               onNameChange={(value) => {
@@ -748,8 +786,10 @@ export function FirstRunOnboarding() {
 
 function OnboardingStepContent({
   step,
+  avatar,
   name,
   nameError,
+  onAvatarChange,
   onNameChange,
   permissionMessage,
   dndConfigured,
@@ -758,9 +798,11 @@ function OnboardingStepContent({
   onConfigureBattery,
   busy,
 }: {
-  step: Step;
+  step: Exclude<Step, "welcome" | "guide">;
+  avatar?: ProfileAvatar;
   name: string;
   nameError: string;
+  onAvatarChange: (value: ProfileAvatar) => void;
   onNameChange: (value: string) => void;
   permissionMessage: string;
   dndConfigured: boolean;
@@ -772,45 +814,21 @@ function OnboardingStepContent({
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
 
-  if (step === "welcome") {
-    return (
-      <View style={styles.stepContent}>
-        <View style={styles.brandRow}>
-          <View style={styles.iconWrap}>
-            <HeartPulse color={colors.primaryDark} size={30} />
-          </View>
-          <AppText variant="subheading" style={styles.brandName}>
-            Remedin
-          </AppText>
-        </View>
-        <AppText accessibilityRole="header" variant="title" style={styles.title}>
-          Bem-vindo ao Remedin
-        </AppText>
-        <AppText muted style={styles.description}>
-          Organize seus medicamentos e acompanhe sua rotina com mais tranquilidade.
-        </AppText>
-      </View>
-    );
-  }
-
   if (step === "profile") {
     return (
       <View style={styles.stepContent}>
-        <AppText variant="caption" style={styles.eyebrow}>
-          Primeiro acesso
-        </AppText>
+        <RemedinHorizontalSignature color={colors.primaryDark} style={styles.profileBrand} />
         <AppText accessibilityRole="header" variant="title" style={styles.title}>
           Como podemos chamar você?
         </AppText>
         <AppText muted style={styles.description}>
-          Usaremos seu nome apenas para personalizar sua experiência neste aparelho.
+          Personalize seu perfil. Seu nome e avatar ficam neste aparelho.
         </AppText>
         <AppText style={styles.inputLabel}>Seu nome</AppText>
         <TextInput
           accessibilityLabel="Seu nome"
           autoCapitalize="words"
           autoComplete="name"
-          autoFocus
           onChangeText={onNameChange}
           placeholder="Digite seu nome"
           placeholderTextColor={colors.textMuted}
@@ -828,6 +846,7 @@ function OnboardingStepContent({
             {nameError}
           </AppText>
         ) : null}
+        <ProfileAvatarPicker value={avatar} onChange={onAvatarChange} />
       </View>
     );
   }
@@ -960,10 +979,6 @@ function OnboardingStepContent({
         ) : null}
       </View>
     );
-  }
-
-  if (step === "guide") {
-    return null;
   }
 
   const content = PERMISSION_CONTENT[step];
@@ -1134,7 +1149,6 @@ function AlarmPreview() {
 
 function getPrimaryTitle(step: Step, busy: boolean): string {
   if (busy) return "Aguarde...";
-  if (step === "welcome") return "Começar";
   if (step === "profile") return "Continuar";
   if (step === "guide") return "Configurar meus lembretes";
   if (step === "notifications") return "Permitir notificações";
@@ -1330,13 +1344,8 @@ const createStyles = (colors: ThemeColors) =>
       borderWidth: 1,
       padding: spacing.xl,
     },
-    brandRow: {
-      alignItems: "center",
-      flexDirection: "row",
-      marginBottom: spacing.xl,
-    },
-    brandName: { color: colors.primaryDark, marginLeft: spacing.md },
-    eyebrow: { color: colors.primaryDark, marginBottom: spacing.md },
+    profileBrand: { marginBottom: spacing.xl },
+    profileBackButton: { alignSelf: "flex-start" },
     iconWrap: {
       alignItems: "center",
       backgroundColor: colors.primarySoft,

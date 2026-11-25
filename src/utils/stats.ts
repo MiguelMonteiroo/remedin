@@ -3,10 +3,8 @@ import type {
   Medication,
   MedicationSchedule,
 } from "../types/domain";
-import {
-  generateDoseOccurrencesForDate,
-  resolveDoseStatus,
-} from "./doseEngine";
+import { getTodayDoseViewModel, indexLatestDoseLogs } from "./doseEngine";
+import { formatLocalDate } from "./dateTime";
 
 export interface AdherenceResult {
   percentage: number;
@@ -53,58 +51,26 @@ export function buildDailyAdherenceSummary(
   date: string,
   medications: Medication[],
   schedules: MedicationSchedule[],
-  logs: DoseLog[],
+  logs: DoseLog[] | ReadonlyMap<string, DoseLog>,
   now = new Date()
 ): DailyAdherenceSummary {
-  const summary: DailyAdherenceSummary = {
+  const { summary } = getTodayDoseViewModel(date, medications, schedules, logs, now);
+  return {
     date,
-    total: 0,
-    taken: 0,
-    pending: 0,
-    skipped: 0,
-    snoozed: 0,
-    unrecorded: 0,
-    percentage: null,
+    ...summary,
+    percentage: summary.total ? Math.round((summary.taken / summary.total) * 100) : null,
   };
-
-  for (const medication of medications) {
-    const medicationSchedules = schedules.filter(
-      (schedule) => schedule.medicationId === medication.id
-    );
-
-    for (const schedule of medicationSchedules) {
-      const occurrences = generateDoseOccurrencesForDate(
-        medication,
-        schedule,
-        date
-      );
-
-      for (const occurrence of occurrences) {
-        const status = resolveDoseStatus(
-          occurrence.id,
-          logs,
-          occurrence.scheduledAt,
-          now
-        );
-        summary.total += 1;
-        summary[status] += 1;
-      }
-    }
-  }
-
-  summary.percentage =
-    summary.total > 0
-      ? Math.round((summary.taken / summary.total) * 100)
-      : null;
-
-  return summary;
 }
 
-function formatLocalDate(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
-    2,
-    "0"
-  )}-${String(date.getDate()).padStart(2, "0")}`;
+export function buildAdherenceHistory(
+  dates: string[],
+  medications: Medication[],
+  schedules: MedicationSchedule[],
+  logs: DoseLog[],
+  now = new Date()
+): DailyAdherenceSummary[] {
+  const latestLogs = indexLatestDoseLogs(logs);
+  return dates.map((date) => buildDailyAdherenceSummary(date, medications, schedules, latestLogs, now));
 }
 
 function parseLocalDate(date: string): Date {

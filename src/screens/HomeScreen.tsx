@@ -81,7 +81,7 @@ export function HomeScreen({ navigation }: Props) {
 
   if (loading) {
     return (
-      <Screen style={[styles.center, { backgroundColor: colors.background }]}>
+      <Screen edges={["top", "left", "right"]} style={[styles.center, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
         <AppText muted style={[styles.loadingText, { color: colors.textMuted }]}>{ptBR.home.loading}</AppText>
       </Screen>
@@ -90,7 +90,7 @@ export function HomeScreen({ navigation }: Props) {
 
   if (error) {
     return (
-      <Screen style={[styles.center, { backgroundColor: colors.background }]}>
+      <Screen edges={["top", "left", "right"]} style={[styles.center, { backgroundColor: colors.background }]}>
         <AppText variant="subheading" style={styles.errorText}>{ptBR.home.loadErrorTitle}</AppText>
         <AppText muted style={[styles.centerText, { color: colors.textMuted }]}>{ptBR.home.loadErrorMessage}</AppText>
         <AppButton icon={RefreshCw} onPress={retryLoadingData} title={ptBR.actions.tryAgain} />
@@ -173,9 +173,10 @@ export function HomeScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen style={{ backgroundColor: colors.background }}>
+    <Screen edges={["top", "left", "right"]} style={{ backgroundColor: colors.background }}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <CareHeader
+          avatar={settings.profileAvatar}
           title={`${greeting}${settings.userName.trim() ? `, ${settings.userName.trim()}` : ""}`}
           subtitle={
             presentation.kind === "active" || presentation.kind === "complete"
@@ -257,7 +258,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   centerText: { marginBottom: spacing.xl, marginTop: spacing.sm, textAlign: "center" },
   loadingText: { marginTop: spacing.md },
   errorText: { color: colors.danger, textAlign: "center" },
-  content: { paddingBottom: 124, gap: spacing.lg },
+  content: { paddingBottom: spacing.xl, gap: spacing.lg },
   completeBanner: {
     alignItems: "center",
     backgroundColor: colors.successSoft,

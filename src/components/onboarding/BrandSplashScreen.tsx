@@ -1,8 +1,8 @@
-import React, { useEffect, useRef } from "react";
+﻿import { useEffect, useRef } from "react";
 import { Animated, StatusBar, StyleSheet, View } from "react-native";
 import { RemedinCapsuleSymbol } from "../brand/RemedinBrand";
 import { AppText } from "../ui/AppText";
-import { motionDurations, motionEasings } from "../../theme/motion";
+import { motionEasings } from "../../theme/motion";
 import { spacing } from "../../theme/spacing";
 import { fontFamilies } from "../../theme/typography";
 import { useReducedMotion } from "../../utils/useReducedMotion";
@@ -11,72 +11,83 @@ const CORAL_BRAND_BG = "#A44945";
 const CORAL_BRAND_FG = "#FFFFFF";
 
 export function BrandSplashScreen({
-  statusText = "Preparando seu cuidado...",
+  firstLaunch = false,
+  onIntroComplete,
 }: {
-  statusText?: string;
+  firstLaunch?: boolean;
+  onIntroComplete?: () => void;
 }) {
   const reduceMotion = useReducedMotion();
-  const fadeAnim = useRef(new Animated.Value(reduceMotion ? 1 : 0)).current;
-  const scaleAnim = useRef(new Animated.Value(reduceMotion ? 1 : 0.94)).current;
+  const progress = useRef(new Animated.Value(firstLaunch ? 0 : 1)).current;
+  const animate = firstLaunch && !reduceMotion;
 
   useEffect(() => {
+    if (!firstLaunch) return;
     if (reduceMotion) {
-      fadeAnim.setValue(1);
-      scaleAnim.setValue(1);
-      return;
+      const timer = setTimeout(() => onIntroComplete?.(), 450);
+      return () => clearTimeout(timer);
     }
 
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: motionDurations.splash,
-        easing: motionEasings.enter,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: motionDurations.splash,
-        easing: motionEasings.enter,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [fadeAnim, reduceMotion, scaleAnim]);
+    progress.setValue(0);
+    const intro = Animated.timing(progress, {
+      toValue: 1,
+      duration: 1250,
+      easing: motionEasings.standard,
+      useNativeDriver: true,
+    });
+    intro.start(({ finished }) => {
+      if (finished) onIntroComplete?.();
+    });
+    return () => intro.stop();
+  }, [firstLaunch, onIntroComplete, progress, reduceMotion]);
 
   return (
     <View
       accessible
-      accessibilityLabel={`remedin. ${statusText}`}
+      accessibilityLabel="remedin. Preparando seu cuidado..."
       accessibilityRole="summary"
       style={styles.screen}
     >
       <StatusBar barStyle="light-content" backgroundColor={CORAL_BRAND_BG} />
-
-      <Animated.View
-        style={[
-          styles.centerStage,
-          {
-            opacity: fadeAnim,
-            transform: [{ scale: scaleAnim }],
-          },
-        ]}
-      >
-        <View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          style={styles.symbolHalo}
+      <View style={styles.symbolHalo}>
+        {animate ? (
+          <Animated.View
+            style={[
+              styles.introRing,
+              {
+                opacity: progress.interpolate({
+                  inputRange: [0, 0.42, 0.9],
+                  outputRange: [0, 0.55, 0],
+                  extrapolate: "clamp",
+                }),
+                transform: [{ scale: progress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.66, 1.34],
+                }) }],
+              },
+            ]}
+          />
+        ) : null}
+        <Animated.View
+          style={animate ? {
+            opacity: progress.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 1, 1] }),
+            transform: [
+              { scale: progress.interpolate({ inputRange: [0, 0.52, 1], outputRange: [0.68, 1.06, 1] }) },
+              { rotate: progress.interpolate({ inputRange: [0, 0.68, 1], outputRange: ["-28deg", "0deg", "0deg"] }) },
+            ],
+          } : undefined}
         >
           <RemedinCapsuleSymbol color={CORAL_BRAND_FG} size={108} />
-        </View>
-        <AppText allowFontScaling={false} style={styles.wordmark}>
-          remedin
-        </AppText>
-      </Animated.View>
-
-      <View style={styles.footer}>
-        <AppText variant="small" style={styles.statusText}>
-          {statusText}
-        </AppText>
+        </Animated.View>
       </View>
+      <Animated.View style={animate ? {
+        opacity: progress.interpolate({
+          inputRange: [0, 0.36, 0.78, 1],
+          outputRange: [0, 0, 1, 1],
+        }),
+      } : undefined}>
+        <AppText allowFontScaling={false} style={styles.wordmark}>remedin</AppText>
+      </Animated.View>
     </View>
   );
 }
@@ -86,37 +97,28 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: CORAL_BRAND_BG,
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: spacing.xxl,
-    paddingHorizontal: spacing.xl,
-  },
-  centerStage: {
-    flex: 1,
-    alignItems: "center",
     justifyContent: "center",
   },
   symbolHalo: {
     width: 156,
     height: 156,
     borderRadius: 78,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "rgba(255, 255, 255, 0.10)",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: spacing.md,
   },
+  introRing: {
+    ...StyleSheet.absoluteFill,
+    borderRadius: 78,
+    borderWidth: 1,
+    borderColor: CORAL_BRAND_FG,
+  },
   wordmark: {
     color: CORAL_BRAND_FG,
     fontFamily: fontFamilies.semibold,
-    fontSize: 34,
-    lineHeight: 42,
-    letterSpacing: -0.6,
-  },
-  footer: {
-    paddingBottom: spacing.lg,
-    alignItems: "center",
-  },
-  statusText: {
-    color: CORAL_BRAND_FG,
-    fontFamily: fontFamilies.medium,
+    fontSize: 40,
+    lineHeight: 48,
+    letterSpacing: -1,
   },
 });

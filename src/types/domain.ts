@@ -56,31 +56,31 @@ export type ReminderNotification = {
   scheduledFor: string;
 };
 
+export const PROFILE_AVATARS = [
+  "bear",
+  "cat",
+  "dog",
+  "owl",
+  "capybara",
+  "rabbit",
+  "penguin",
+  "axolotl",
+  "turtle",
+  "octopus",
+] as const;
+export type ProfileAvatar = (typeof PROFILE_AVATARS)[number];
+
 export type ReminderSettings = {
   notificationsEnabled: boolean;
   defaultSnoozeMinutes: number;
   userName: string;
+  profileAvatar?: ProfileAvatar;
+  onboardingIntroSeen?: boolean;
   fullScreenAlarmEnabled: boolean;
   criticalAlertsEnabled: boolean;
   showLockScreenDetails: boolean;
   reminderSetupCompleted: boolean;
   onboardingCompleted: boolean;
-};
-
-export type AuthProviderKind = "google" | "email";
-
-export type UserAccount = {
-  authenticated: boolean;
-  name: string;
-  email: string;
-  provider: AuthProviderKind | null;
-};
-
-export type StoredUserCredential = {
-  name: string;
-  email: string;
-  password?: string;
-  provider: AuthProviderKind;
 };
 
 export type ReminderArtifactKind =

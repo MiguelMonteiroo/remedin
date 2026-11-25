@@ -85,7 +85,7 @@ describe("database migrations", () => {
     }
   });
 
-  it("migrates the database to version 3", async () => {
+  it("migrates the database to version 4", async () => {
     const { db, close } = createTestDatabase();
 
     try {
@@ -94,7 +94,39 @@ describe("database migrations", () => {
         "PRAGMA user_version"
       );
 
-      expect(version?.user_version).toBe(3);
+      expect(version?.user_version).toBe(4);
+    } finally {
+      close();
+    }
+  });
+
+  it.each(["Perfil local", ""] as const)("removes old credentials and preserves the profile (name %j)", async (name) => {
+    const { db, close } = createTestDatabase();
+
+    try {
+      await migrateDbIfNeeded(db);
+      await db.execAsync(`
+        PRAGMA user_version = 3;
+        INSERT INTO app_settings (key, value) VALUES
+          ('authName', 'Nome anterior'),
+          ('authEmail', 'test@example.com'),
+          ('authAuthenticated', 'true'),
+          ('authProvider', 'email'),
+          ('authAccountsJson', '[{"password":"test-only"}]'),
+          ('userName', '${name}'),
+          ('profileAvatar', 'capybara'),
+          ('onboardingCompleted', 'true');
+      `);
+
+      await migrateDbIfNeeded(db);
+      await migrateDbIfNeeded(db);
+
+      expect(await db.getAllAsync("SELECT * FROM app_settings ORDER BY key")).toEqual([
+        { key: "defaultSnoozeMinutes", value: "5" },
+        { key: "onboardingCompleted", value: "true" },
+        { key: "profileAvatar", value: "capybara" },
+        { key: "userName", value: name || "Nome anterior" },
+      ]);
     } finally {
       close();
     }

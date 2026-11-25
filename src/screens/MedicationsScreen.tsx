@@ -27,7 +27,7 @@ export function MedicationsScreen({ navigation }: Props) {
   const { medications, schedules } = useAppData();
 
   return (
-    <Screen style={{ backgroundColor: colors.background }}>
+    <Screen edges={["top", "left", "right"]} style={{ backgroundColor: colors.background }}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <View style={styles.headerBlock}>
           <AppText variant="caption" weight="bold" style={styles.eyebrow}>
@@ -124,7 +124,7 @@ function getScheduleLabel(schedule: ReturnType<typeof useAppData>["schedules"][n
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
-    content: { paddingBottom: 124 },
+    content: { paddingBottom: spacing.xl },
     headerBlock: { marginBottom: spacing.lg },
     eyebrow: {
       color: colors.primary,

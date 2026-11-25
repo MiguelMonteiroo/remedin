@@ -10,7 +10,6 @@ import { MedicationDetailScreen } from "../screens/MedicationDetailScreen";
 import { HistoryScreen } from "../screens/HistoryScreen";
 import { MedicationsScreen } from "../screens/MedicationsScreen";
 import { SettingsScreen } from "../screens/SettingsScreen";
-import { OnboardingScreen } from "../screens/OnboardingScreen";
 import { RootStackParamList, RootTabParamList } from "./types";
 import { useAppTheme } from "../theme/ThemeProvider";
 import { ptBR } from "../i18n/ptBR";
@@ -30,7 +29,7 @@ const TAB_CONFIG: Record<keyof RootTabParamList, { icon: LucideIcon; label: stri
 function MainTabs() {
   return (
     <Tabs.Navigator
-      tabBar={(props) => <FloatingTabBar {...props} />}
+      tabBar={(props) => <BottomNavigationBar {...props} />}
       screenOptions={{
         headerShown: false,
       }}
@@ -67,58 +66,61 @@ function MainTabs() {
   );
 }
 
-export function FloatingTabBar({ state, navigation }: BottomTabBarProps) {
+export function BottomNavigationBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
 
   return (
-    <View style={[styles.floatingContainer, { bottom: Math.max(insets.bottom, 16) + 8 }]}>
-      <View
-        style={[
-          styles.floatingPill,
-          {
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-          },
-        ]}
-      >
-        {state.routes.map((route, index) => {
-          const config = TAB_CONFIG[route.name as keyof RootTabParamList];
-          const focused = state.index === index;
-          const Icon = config.icon;
-          const itemTint = focused ? colors.primaryDark : colors.textMuted;
+    <View
+      style={[
+        styles.bar,
+        {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+          paddingBottom: insets.bottom,
+          paddingLeft: insets.left,
+          paddingRight: insets.right,
+        },
+      ]}
+    >
+      {state.routes.map((route, index) => {
+        const config = TAB_CONFIG[route.name as keyof RootTabParamList];
+        const focused = state.index === index;
+        const Icon = config.icon;
+        const itemTint = focused ? colors.primaryDark : colors.textMuted;
 
-          return (
-            <Pressable
-              accessibilityLabel={config.label}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: focused }}
-              key={route.key}
-              onLongPress={() => navigation.emit({ type: "tabLongPress", target: route.key })}
-              onPress={() => {
-                const event = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
-                if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
-              }}
-              style={({ pressed }) => [
-                styles.navItem,
-                focused && { backgroundColor: colors.primarySoft },
-                pressed && styles.navItemPressed,
-              ]}
+        return (
+          <Pressable
+            accessibilityLabel={config.label}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: focused }}
+            key={route.key}
+            onLongPress={() => navigation.emit({ type: "tabLongPress", target: route.key })}
+            onPress={() => {
+              const event = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
+              if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
+            }}
+            style={({ pressed }) => [
+              styles.navItem,
+              pressed && { backgroundColor: colors.surfaceMuted },
+            ]}
+          >
+            {focused ? (
+              <View style={[styles.indicator, { backgroundColor: colors.primary }]} />
+            ) : null}
+            <Icon color={itemTint} size={22} strokeWidth={focused ? 2.5 : 2.1} />
+            <AppText
+              maxFontSizeMultiplier={1.25}
+              numberOfLines={2}
+              style={[styles.navLabel, { color: itemTint }]}
+              variant="caption"
+              weight={focused ? "bold" : "medium"}
             >
-              <Icon color={itemTint} size={22} strokeWidth={focused ? 2.5 : 2.1} />
-              <AppText
-                allowFontScaling={false}
-                numberOfLines={1}
-                style={[styles.navLabel, { color: itemTint }]}
-                variant="caption"
-                weight="bold"
-              >
-                {config.label}
-              </AppText>
-            </Pressable>
-          );
-        })}
-      </View>
+              {config.label}
+            </AppText>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
@@ -135,14 +137,6 @@ export function AppNavigator() {
         headerTitleStyle: { fontFamily: fontFamilies.bold },
       }}
     >
-      <Stack.Screen
-        name="Onboarding"
-        options={{ headerShown: false }}
-      >
-        {({ navigation }) => (
-          <OnboardingScreen onComplete={() => navigation.replace("MainTabs")} />
-        )}
-      </Stack.Screen>
       <Stack.Screen
         name="MainTabs"
         component={MainTabs}
@@ -168,42 +162,30 @@ export function AppNavigator() {
 }
 
 const styles = StyleSheet.create({
-  floatingContainer: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    alignItems: "center",
-    pointerEvents: "box-none",
-  },
-  floatingPill: {
+  bar: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    borderRadius: 40,
-    borderWidth: 1,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.08,
-    shadowRadius: 40,
-    elevation: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   navItem: {
+    flex: 1,
     alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-    minHeight: 52,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 30,
+    gap: 3,
+    minHeight: 58,
+    paddingTop: 10,
+    paddingBottom: 8,
+    paddingHorizontal: 2,
   },
-  navItemPressed: {
-    opacity: 0.75,
+  indicator: {
+    position: "absolute",
+    top: 0,
+    width: 24,
+    height: 2,
+    borderBottomLeftRadius: 2,
+    borderBottomRightRadius: 2,
   },
   navLabel: {
-    fontSize: 11,
-    fontWeight: "700",
+    fontSize: 12,
+    lineHeight: 16,
     textAlign: "center",
   },
 });

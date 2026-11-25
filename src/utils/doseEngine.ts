@@ -5,7 +5,7 @@ import {
   DoseLog,
   DoseStatus,
 } from "../types/domain";
-import { normalizeDoseDateTime } from "./dateTime";
+import { formatLocalDate, normalizeDoseDateTime } from "./dateTime";
 
 function occursAfterMedicationCreation(
   occurrence: DoseOccurrence,
@@ -47,7 +47,11 @@ function generateIntervalOccurrences(
   const dayEnd = new Date(dayStart);
   dayEnd.setDate(dayEnd.getDate() + 1);
 
-  if (!Number.isFinite(anchor.getTime()) || intervalMs <= 0) return [];
+  if (
+    !Number.isFinite(anchor.getTime()) ||
+    !Number.isFinite(intervalMs) ||
+    intervalMs < 3_600_000
+  ) return [];
 
   const firstIndex = Math.max(
     0,
@@ -120,23 +124,20 @@ export function resolveDoseStatus(
   scheduledAt?: string,
   now = new Date()
 ): DoseStatus {
-  const relevantLogs = logs.filter(
-    (log) => log.doseOccurrenceId === doseOccurrenceId
-  );
+  return resolveStatusFromLog(getLatestDoseLog(doseOccurrenceId, logs), scheduledAt, now);
+}
 
-  const unresolvedStatus = (): DoseStatus => {
-    if (!scheduledAt) return "pending";
-    const scheduledDate = scheduledAt.slice(0, 10);
-    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
-      2,
-      "0"
-    )}-${String(now.getDate()).padStart(2, "0")}`;
-    return scheduledDate < today ? "unrecorded" : "pending";
-  };
+function resolveStatusFromLog(
+  latestLog: DoseLog | null,
+  scheduledAt: string | undefined,
+  now: Date
+): DoseStatus {
+  const unresolvedStatus = (): DoseStatus =>
+    scheduledAt && scheduledAt.slice(0, 10) < formatLocalDate(now)
+      ? "unrecorded"
+      : "pending";
 
-  if (relevantLogs.length === 0) return unresolvedStatus();
-
-  const latestLog = getLatestDoseLog(doseOccurrenceId, relevantLogs)!;
+  if (!latestLog) return unresolvedStatus();
 
   if (latestLog.action === "undone") return "pending";
   if (latestLog.action === "snoozed") {
@@ -151,28 +152,38 @@ export function resolveDoseStatus(
   return "pending";
 }
 
-export function getLatestDoseLog(
+function isLatestLog(log: DoseLog, previous: DoseLog | null | undefined): boolean {
+  return !previous || log.actionAt.localeCompare(previous.actionAt) >= 0;
+}
+
+function getLatestDoseLog(
   doseOccurrenceId: string,
-  logs: DoseLog[]
+  logs: DoseLog[] | ReadonlyMap<string, DoseLog>
 ): DoseLog | null {
-  const relevantLogs = logs
-    .filter((log) => log.doseOccurrenceId === doseOccurrenceId)
-    .sort((a, b) => a.actionAt.localeCompare(b.actionAt));
-  return relevantLogs.at(-1) ?? null;
+  if (!Array.isArray(logs)) return logs.get(doseOccurrenceId) ?? null;
+
+  let latest: DoseLog | null = null;
+  for (const log of logs) {
+    if (log.doseOccurrenceId === doseOccurrenceId && isLatestLog(log, latest)) latest = log;
+  }
+  return latest;
+}
+
+export function indexLatestDoseLogs(logs: DoseLog[]): ReadonlyMap<string, DoseLog> {
+  const latest = new Map<string, DoseLog>();
+  for (const log of logs) {
+    if (isLatestLog(log, latest.get(log.doseOccurrenceId))) latest.set(log.doseOccurrenceId, log);
+  }
+  return latest;
 }
 
 export function resolveDoseOccurrence(
   occurrence: DoseOccurrence,
-  logs: DoseLog[],
+  logs: DoseLog[] | ReadonlyMap<string, DoseLog>,
   now = new Date()
 ): { occurrence: DoseOccurrence; latestLog: DoseLog | null } {
   const latestLog = getLatestDoseLog(occurrence.id, logs);
-  const status = resolveDoseStatus(
-    occurrence.id,
-    logs,
-    occurrence.scheduledAt,
-    now
-  );
+  const status = resolveStatusFromLog(latestLog, occurrence.scheduledAt, now);
   const scheduledAt =
     status === "snoozed" && latestLog?.action === "snoozed"
       ? normalizeDoseDateTime(latestLog.snoozedUntil)
@@ -188,25 +199,23 @@ export function getTodayDoseViewModel(
   date: string,
   medications: Medication[],
   schedules: MedicationSchedule[],
-  logs: DoseLog[]
+  logs: DoseLog[] | ReadonlyMap<string, DoseLog>,
+  now = new Date()
 ): { occurrences: DoseOccurrence[]; summary: AdherenceSummary } {
-  const allOccurrences: DoseOccurrence[] = [];
+  const latestLogs = Array.isArray(logs) ? indexLatestDoseLogs(logs) : logs;
+  const schedulesByMedication = new Map<string, MedicationSchedule[]>();
+  for (const schedule of schedules) {
+    const existing = schedulesByMedication.get(schedule.medicationId);
+    if (existing) existing.push(schedule);
+    else schedulesByMedication.set(schedule.medicationId, [schedule]);
+  }
 
+  const allOccurrences: DoseOccurrence[] = [];
   for (const medication of medications) {
-    const medSchedules = schedules.filter(
-      (s) => s.medicationId === medication.id
-    );
-    for (const schedule of medSchedules) {
-      const occurrences = generateDoseOccurrencesForDate(
-        medication,
-        schedule,
-        date
-      );
-      allOccurrences.push(
-        ...occurrences.map(
-          (occurrence) => resolveDoseOccurrence(occurrence, logs).occurrence
-        )
-      );
+    for (const schedule of schedulesByMedication.get(medication.id) ?? []) {
+      for (const occurrence of generateDoseOccurrencesForDate(medication, schedule, date)) {
+        allOccurrences.push(resolveDoseOccurrence(occurrence, latestLogs, now).occurrence);
+      }
     }
   }
 

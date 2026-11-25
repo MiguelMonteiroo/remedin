@@ -32,6 +32,7 @@ const SYSTEM_NOTIFICATION_CLEARANCE = (StatusBar.currentHeight ?? 24) + 96;
 type Props = {
   payload?: DoseAlarmPayload | null;
   embedded?: boolean;
+  preview?: boolean;
   onClose?: () => void;
   onDoseAction?: () => Promise<void> | void;
 };
@@ -116,6 +117,7 @@ async function expandDoseWindow(
 export function DoseAlarmScreen({
   payload: initialPayload,
   embedded,
+  preview,
   onClose,
   onDoseAction,
 }: Props) {
@@ -152,6 +154,7 @@ export function DoseAlarmScreen({
   }, [embedded, payloads]);
 
   useEffect(() => {
+    if (preview) return;
     let cancelled = false;
     setLoadFailed(false);
 
@@ -181,18 +184,19 @@ export function DoseAlarmScreen({
     return () => {
       cancelled = true;
     };
-  }, [initialPayload, loadAttempt]);
+  }, [initialPayload, loadAttempt, preview]);
 
   const primaryPayload = payloads[0];
   const isTest = primaryPayload?.data.artifactKind === "alarmTest";
 
   useEffect(() => {
+    if (preview) return;
     const timer = setTimeout(() => {
       if (embedded) onClose?.();
       else closeActiveAlarm(primaryPayload?.notificationId);
     }, isTest ? 10_000 : 60_000);
     return () => clearTimeout(timer);
-  }, [embedded, isTest, onClose, primaryPayload?.notificationId]);
+  }, [embedded, isTest, onClose, primaryPayload?.notificationId, preview]);
 
   const time = useMemo(
     () => formatAlarmTime(String(primaryPayload?.data.scheduledAt || "")),
@@ -203,6 +207,10 @@ export function DoseAlarmScreen({
     payload: DoseAlarmPayload,
     actionId: NotificationActionId
   ) {
+    if (preview) {
+      onClose?.();
+      return;
+    }
     if (busyId) return;
     setBusyId(payload.notificationId);
     try {
