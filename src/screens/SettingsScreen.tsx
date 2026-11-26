@@ -41,6 +41,10 @@ import { radii } from "../theme/radii";
 import { spacing } from "../theme/spacing";
 import { fontFamilies } from "../theme/typography";
 import { ptBR } from "../i18n/ptBR";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { RootStackParamList } from "../navigation/types";
+import privacy from "../legal/privacy.json";
 import { REMINDER_SETTING_ORDER, type ReminderSettingKey } from "../utils/reminderSettingsOrder";
 import {
   fullScreenAlarmAction,
@@ -49,6 +53,7 @@ import {
 } from "../services/reminders/alarmPresentationDiagnostics";
 
 export function SettingsScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
   const {
@@ -333,6 +338,10 @@ export function SettingsScreen() {
         </AppCard>
 
         <SectionHeader title="Sobre" />
+        <AppCard style={[styles.profileCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <AppText variant="small" style={{ color: colors.text }}>{privacy.medicalDisclaimer}</AppText>
+          <AppButton icon={LockKeyhole} onPress={() => navigation.navigate("Privacy")} title={ptBR.privacy.open} variant="ghost" />
+        </AppCard>
         <View style={styles.aboutRow}>
           <Info color={colors.primaryMuted} size={22} strokeWidth={2} />
           <View style={styles.aboutCopy}>

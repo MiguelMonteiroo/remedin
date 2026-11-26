@@ -10,6 +10,7 @@ import { MedicationDetailScreen } from "../screens/MedicationDetailScreen";
 import { HistoryScreen } from "../screens/HistoryScreen";
 import { MedicationsScreen } from "../screens/MedicationsScreen";
 import { SettingsScreen } from "../screens/SettingsScreen";
+import { PrivacyScreen } from "../screens/PrivacyScreen";
 import { RootStackParamList, RootTabParamList } from "./types";
 import { useAppTheme } from "../theme/ThemeProvider";
 import { ptBR } from "../i18n/ptBR";
@@ -157,6 +158,7 @@ export function AppNavigator() {
         component={MedicationDetailScreen}
         options={{ headerShown: false }}
       />
+      <Stack.Screen name="Privacy" component={PrivacyScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

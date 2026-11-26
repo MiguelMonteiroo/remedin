@@ -1,5 +1,12 @@
 export const ptBR = {
   appName: "Remedin",
+  privacy: {
+    open: "Privacidade e uso",
+    updatedAt: "Atualizada em",
+    contact: "Contato sobre privacidade",
+    sendEmail: "Enviar e-mail",
+    emailError: "Não foi possível abrir o e-mail. Use o endereço acima no aplicativo de sua preferência.",
+  },
   tabs: {
     today: "Hoje",
     medications: "Medicamentos",

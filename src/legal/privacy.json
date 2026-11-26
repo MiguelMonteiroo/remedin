@@ -1,0 +1,48 @@
+{
+  "title": "Privacidade e uso",
+  "updatedAt": "25 de novembro de 2026",
+  "controller": "Miguel de França Monteiro",
+  "contactEmail": "monteiro.miguel9752@gmail.com",
+  "publicUrl": "https://MiguelMonteiroo.github.io/medminder/",
+  "medicalTitle": "Um apoio à sua rotina",
+  "medicalDisclaimer": "O Remedin é um organizador de medicamentos e lembretes pessoais. Não é um dispositivo médico e não diagnostica, trata, cura ou previne doenças ou outras condições de saúde. Consulte um profissional de saúde para orientação, diagnóstico ou tratamento. Não altere doses ou horários prescritos com base no aplicativo.",
+  "alarmNotice": "Os lembretes dependem das permissões, do volume, da bateria e das configurações do aparelho. Podem atrasar ou não tocar. Não dependa exclusivamente do Remedin para horários essenciais ao seu tratamento.",
+  "sections": [
+    {
+      "title": "Quem é responsável",
+      "body": "Esta política descreve o uso de dados pelo aplicativo Android Remedin, desenvolvido por Miguel de França Monteiro. Para dúvidas sobre privacidade, entre em contato pelo e-mail informado ao final desta página."
+    },
+    {
+      "title": "Quais dados ficam no aparelho",
+      "body": "O Remedin armazena o nome e o avatar escolhidos para o perfil; nomes, dosagens e observações dos medicamentos; horários, frequência e pausas; registros de doses tomadas, puladas, adiadas ou desfeitas; preferências de lembretes e progresso do primeiro acesso. Esses dados servem para organizar sua rotina, gerar o histórico e programar os lembretes. Informações sobre medicamentos e doses podem revelar dados de saúde."
+    },
+    {
+      "title": "Armazenamento e envio de dados",
+      "body": "Os dados são armazenados localmente no espaço privado do aplicativo, em banco de dados e arquivos usados para os alarmes. O Remedin não exige conta, não possui servidor de dados do usuário e não envia seu perfil, medicamentos ou histórico ao desenvolvedor. Não há publicidade, rastreamento de uso ou ferramentas de analytics no aplicativo. Não vendemos nem compartilhamos esses dados com empresas."
+    },
+    {
+      "title": "Notificações e permissões",
+      "body": "Os lembretes são locais e usam recursos do Android. A permissão de notificações permite exibir avisos; o acesso a alarmes exatos ajuda a dispará-los no horário; a autorização de tela cheia permite apresentar o alarme; e o acesso ao Não Perturbe permite configurar alertas críticos quando você escolhe essa opção. O serviço em segundo plano mantém som e vibração enquanto o alarme está ativo. Você pode rever essas opções no Perfil e nas configurações do Android. Não acessamos localização, contatos, câmera, microfone ou Health Connect."
+    },
+    {
+      "title": "Detalhes na tela bloqueada",
+      "body": "Se você ativar a exibição de detalhes, notificações e alarmes poderão mostrar nome, dosagem e observações do medicamento sem desbloquear o aparelho. Outras pessoas com acesso à tela poderão vê-los. Desative “Detalhes na tela bloqueada” no Perfil para ocultar essas informações; as configurações de privacidade do Android também se aplicam."
+    },
+    {
+      "title": "Segurança e cópias de segurança",
+      "body": "O armazenamento usa a proteção de acesso oferecida pelo Android. O aplicativo não adiciona criptografia própria ao banco de dados e não oferece backup ou sincronização em nuvem. A configuração Android do Remedin desabilita o backup automático e a transferência dos dados do aplicativo. Proteja o aparelho com bloqueio de tela e mantenha o sistema atualizado."
+    },
+    {
+      "title": "Por quanto tempo e como apagar",
+      "body": "Os dados ficam no aparelho enquanto você mantiver o aplicativo e seus registros. Você pode editar o perfil e os medicamentos dentro do app. Remover um medicamento também remove seus horários e registros associados. Para apagar todos os dados locais, use Configurações do Android > Apps > Remedin > Armazenamento > Limpar dados, ou desinstale o aplicativo sem manter seus dados. Isso apaga também o perfil e o histórico; não temos uma cópia para recuperá-los. Não há conta online a excluir."
+    },
+    {
+      "title": "Links externos e contato",
+      "body": "Ao abrir a versão pública desta política, o navegador acessa o GitHub Pages. O provedor da hospedagem pode processar dados técnicos da visita, como endereço IP, conforme suas próprias políticas. O app não envia seus registros para essa página. Se você enviar um e-mail de suporte, o responsável receberá o endereço e as informações que você decidir incluir, usando-os para responder à solicitação. Evite enviar dados de saúde desnecessários."
+    },
+    {
+      "title": "Alterações e suas solicitações",
+      "body": "Você pode solicitar esclarecimentos sobre privacidade pelo e-mail de contato. Como seus registros permanecem no aparelho, o desenvolvedor não consegue consultá-los, exportá-los ou apagá-los remotamente. Esta política será atualizada quando o funcionamento ou o tratamento de dados mudar. A data da versão aparece nesta página."
+    }
+  ]
+}

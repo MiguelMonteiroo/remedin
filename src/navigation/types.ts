@@ -1,6 +1,7 @@
 import type { NavigatorScreenParams } from "@react-navigation/native";
 
 export type RootStackParamList = {
+  Privacy: undefined;
   MainTabs: NavigatorScreenParams<RootTabParamList> | undefined;
   AddMedication: undefined;
   EditMedication: { medicationId: string };
