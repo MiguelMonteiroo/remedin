@@ -3,8 +3,8 @@
 ## Fonte e responsáveis
 
 - Texto único: `src/legal/privacy.json`, exibido offline em Perfil > Privacidade e uso.
-- Responsável: Miguel de França Monteiro.
-- Contato público: monteiro.miguel9752@gmail.com.
+- Responsáveis: Miguel de França Monteiro e Patryck Daniel Silva Santos.
+- Contatos públicos: monteiro.miguel9752@gmail.com e patryckdaniel@hotmail.com.
 - Página estática gerada: `privacy-site/index.html`.
 - URL prevista após ativar Pages: https://MiguelMonteiroo.github.io/remedin/.
 - A URL prevista só deve ser cadastrada no Play Console depois de retornar HTTP 200 e exibir a política sem login.

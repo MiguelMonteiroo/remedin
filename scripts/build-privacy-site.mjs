@@ -32,7 +32,7 @@ const html = `<!doctype html>
   <p class="date">Atualizada em ${escape(policy.updatedAt)}</p>
   <section class="notice"><h2>${escape(policy.medicalTitle)}</h2><p>${escape(policy.medicalDisclaimer)}</p><p>${escape(policy.alarmNotice)}</p></section>
   ${policy.sections.map(section).join("\n  ")}
-  <section><h2>Contato sobre privacidade</h2><p>${escape(policy.controller)}<br><a href="mailto:${escape(policy.contactEmail)}">${escape(policy.contactEmail)}</a></p></section>
+  <section><h2>Contato sobre privacidade</h2>${policy.contacts.map((contact) => `<p>${escape(contact.name)}<br><a href="mailto:${escape(contact.email)}">${escape(contact.email)}</a></p>`).join("")}</section>
   <section><h2>Privacidade da hospedagem</h2><p>Esta página é hospedada no GitHub Pages, sem analytics ou cookies adicionados pelo Remedin. Consulte a <a href="https://docs.github.com/pt/site-policy/privacy-policies/github-general-privacy-statement">declaração de privacidade do GitHub</a> para informações sobre dados técnicos da visita.</p></section>
 </main></body></html>
 `;

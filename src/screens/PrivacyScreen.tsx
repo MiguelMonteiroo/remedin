@@ -19,9 +19,9 @@ export function PrivacyScreen({ navigation }: Props) {
   const { colors } = useAppTheme();
   const [linkError, setLinkError] = useState(false);
 
-  async function contactSupport() {
+  async function contactSupport(email: string) {
     try {
-      await Linking.openURL(`mailto:${privacy.contactEmail}`);
+      await Linking.openURL(`mailto:${email}`);
     } catch {
       setLinkError(true);
     }
@@ -49,9 +49,13 @@ export function PrivacyScreen({ navigation }: Props) {
         ))}
         <View style={styles.section}>
           <AppText accessibilityRole="header" variant="subheading" weight="bold">{ptBR.privacy.contact}</AppText>
-          <AppText>{privacy.controller}</AppText>
-          <AppText selectable>{privacy.contactEmail}</AppText>
-          <AppButton icon={Mail} title={ptBR.privacy.sendEmail} onPress={contactSupport} variant="secondary" />
+          {privacy.contacts.map((contact) => (
+            <View key={contact.email} style={styles.section}>
+              <AppText>{contact.name}</AppText>
+              <AppText selectable>{contact.email}</AppText>
+              <AppButton icon={Mail} title={ptBR.privacy.sendEmail} accessibilityLabel={`${ptBR.privacy.sendEmail}: ${contact.name}`} onPress={() => contactSupport(contact.email)} variant="secondary" />
+            </View>
+          ))}
           {linkError ? <AppText accessibilityRole="alert">{ptBR.privacy.emailError}</AppText> : null}
         </View>
       </ScrollView>
