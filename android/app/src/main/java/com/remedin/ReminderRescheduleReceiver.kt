@@ -4,6 +4,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.facebook.react.HeadlessJsTaskService
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 
 class ReminderRescheduleReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {
@@ -14,7 +16,9 @@ class ReminderRescheduleReceiver : BroadcastReceiver() {
       context.startService(serviceIntent)
       HeadlessJsTaskService.acquireWakeLockNow(context)
     } catch (_: IllegalStateException) {
-      // App startup reconciliation is the fallback when Android blocks background starts.
+      WorkManager.getInstance(context).enqueue(OneTimeWorkRequestBuilder<ReminderReconcileWorker>().build())
+    } catch (_: SecurityException) {
+      WorkManager.getInstance(context).enqueue(OneTimeWorkRequestBuilder<ReminderReconcileWorker>().build())
     }
   }
 }

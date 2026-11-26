@@ -23,6 +23,43 @@ function localDate(date: Date): string {
 }
 
 describe("reminder synchronization", () => {
+  it("recovers a snooze on a retired schedule after editing", async () => {
+    const { db, close } = createTestDatabase();
+    const clock = jest.spyOn(Date, "now").mockReturnValue(new Date("2026-06-01T08:02:00").getTime());
+    try {
+      await migrateDbIfNeeded(db);
+      const repos = createRepositories(db);
+      const med: Medication = { id: "snooze-edit", name: "Teste", dosage: "", notes: "", createdAt: "2026-01-01T00:00:00", updatedAt: "2026-06-01T08:02:00", isPaused: false };
+      await repos.medications.create(med);
+      await repos.schedules.create({ id: "retired", medicationId: med.id, kind: "dailyTimes", times: ["08:00"], intervalHours: 0, weekdays: [], startDate: "", endDate: "", anchorAt: "", snoozeMinutes: 5, isActive: false, effectiveUntil: "2026-06-01T08:02:00" });
+      await repos.doseLogs.create({ id: "snoozed-edit", medicationId: med.id, scheduleId: "retired", doseOccurrenceId: `${med.id}-retired-2026-06-01-0`, action: "snoozed", actionAt: "2026-06-01T08:00:00", snoozedUntil: "2026-06-01T08:05:00" });
+      await repos.settings.update({ notificationsEnabled: true });
+      const scheduler = { cancelSingle: jest.fn(), scheduleForOccurrence: jest.fn().mockResolvedValue(["alarm"]) } as unknown as ReminderScheduler;
+      await reconcileNotifications(repos.reminderArtifacts, repos.medications, repos.schedules, repos.doseLogs, repos.settings, scheduler);
+      expect(scheduler.scheduleForOccurrence).toHaveBeenCalledWith(expect.objectContaining({ scheduledAt: "2026-06-01T08:05:00" }), expect.anything(), expect.objectContaining({ id: "retired" }), expect.objectContaining({ snoozed: true }));
+    } finally { clock.mockRestore(); close(); }
+  });
+
+  it("renews the 48-hour horizon after several days without foreground access", async () => {
+    const { db, close } = createTestDatabase();
+    const clock = jest.spyOn(Date, "now").mockReturnValue(new Date("2026-06-01T00:00:00").getTime());
+    try {
+      await migrateDbIfNeeded(db);
+      const repos = createRepositories(db);
+      await repos.medications.create({ id: "long-term", name: "Teste", dosage: "", notes: "", createdAt: "2026-01-01T00:00:00", updatedAt: "2026-01-01T00:00:00", isPaused: false });
+      await repos.schedules.create({ id: "daily", medicationId: "long-term", kind: "dailyTimes", times: ["08:00"], intervalHours: 0, weekdays: [], startDate: "", endDate: "", anchorAt: "", snoozeMinutes: 5, isActive: true });
+      await repos.settings.update({ notificationsEnabled: true });
+      const scheduler = { cancelSingle: jest.fn(), scheduleForOccurrence: jest.fn().mockResolvedValue(["alarm"]) } as unknown as ReminderScheduler;
+      const reconcile = () => reconcileNotifications(repos.reminderArtifacts, repos.medications, repos.schedules, repos.doseLogs, repos.settings, scheduler);
+      await reconcile();
+      expect(scheduler.scheduleForOccurrence).toHaveBeenCalledWith(expect.objectContaining({ scheduledAt: "2026-06-02T08:00:00" }), expect.anything(), expect.anything(), expect.anything());
+      jest.mocked(scheduler.scheduleForOccurrence).mockClear();
+      clock.mockReturnValue(new Date("2026-06-04T00:00:00").getTime());
+      await reconcile();
+      expect(scheduler.scheduleForOccurrence).toHaveBeenCalledWith(expect.objectContaining({ scheduledAt: "2026-06-05T08:00:00" }), expect.anything(), expect.anything(), expect.anything());
+      expect(jest.mocked(scheduler.scheduleForOccurrence).mock.calls.every(([dose]) => dose.scheduledAt >= "2026-06-04")).toBe(true);
+    } finally { clock.mockRestore(); close(); }
+  });
   it("recognizes native alarms independently from Notifee triggers", () => {
     const artifact = {
       id: "artifact-1",

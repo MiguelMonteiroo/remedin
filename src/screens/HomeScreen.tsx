@@ -41,6 +41,9 @@ export function HomeScreen({ navigation }: Props) {
   const [greeting, setGreeting] = useState(() => getGreetingForHour(new Date().getHours()));
   const [undoingOccurrenceId, setUndoingOccurrenceId] = useState<string | null>(null);
   const undoingOccurrenceRef = useRef<string | null>(null);
+  const [busyDoseId, setBusyDoseId] = useState<string | null>(null);
+  const busyDoseRef = useRef<string | null>(null);
+  const [actionError, setActionError] = useState("");
   const {
     medications,
     todayOccurrences,
@@ -55,6 +58,21 @@ export function HomeScreen({ navigation }: Props) {
     snoozeDose,
     snoozeMinutes,
   } = useAppData();
+
+  async function runDoseAction(id: string, action: () => Promise<void>) {
+    if (busyDoseRef.current) return;
+    busyDoseRef.current = id;
+    setBusyDoseId(id);
+    setActionError("");
+    try {
+      await action();
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Não foi possível registrar a dose. Tente novamente.");
+    } finally {
+      busyDoseRef.current = null;
+      setBusyDoseId(null);
+    }
+  }
 
   useEffect(() => {
     let boundaryTimer: ReturnType<typeof setTimeout> | undefined;
@@ -129,9 +147,11 @@ export function HomeScreen({ navigation }: Props) {
         name={medication.name}
         dosage={medication.dosage}
         snoozeMinutes={snoozeMinutes}
-        onTake={() => setDoseTaken(occurrence.id, occurrence.medicationId, occurrence.scheduleId, false)}
-        onSnooze={() => snoozeDose(occurrence.id, occurrence.medicationId, occurrence.scheduleId)}
-        onSkip={() => skipDose(occurrence.id, occurrence.medicationId, occurrence.scheduleId)}
+        busy={busyDoseId === occurrence.id}
+        disabled={busyDoseId !== null}
+        onTake={() => runDoseAction(occurrence.id, () => setDoseTaken(occurrence.id, occurrence.medicationId, occurrence.scheduleId, false))}
+        onSnooze={() => runDoseAction(occurrence.id, () => snoozeDose(occurrence.id, occurrence.medicationId, occurrence.scheduleId))}
+        onSkip={() => runDoseAction(occurrence.id, () => skipDose(occurrence.id, occurrence.medicationId, occurrence.scheduleId))}
         onPress={() => navigation.navigate("MedicationDetail", { medicationId: occurrence.medicationId })}
       />
     );
@@ -149,8 +169,8 @@ export function HomeScreen({ navigation }: Props) {
         status={occurrence.status as "taken" | "skipped"}
         onPress={() => navigation.navigate("MedicationDetail", { medicationId: occurrence.medicationId })}
         onUndo={
-          occurrence.status === "skipped"
-            ? async () => {
+          occurrence.status === "skipped" || occurrence.status === "taken"
+            ? async () => runDoseAction(occurrence.id, async () => {
                 if (undoingOccurrenceRef.current) return;
                 undoingOccurrenceRef.current = occurrence.id;
                 setUndoingOccurrenceId(occurrence.id);
@@ -164,7 +184,7 @@ export function HomeScreen({ navigation }: Props) {
                   undoingOccurrenceRef.current = null;
                   setUndoingOccurrenceId(null);
                 }
-              }
+              })
             : undefined
         }
         undoing={undoingOccurrenceId === occurrence.id}
@@ -175,6 +195,12 @@ export function HomeScreen({ navigation }: Props) {
   return (
     <Screen edges={["top", "left", "right"]} style={{ backgroundColor: colors.background }}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        {actionError ? (
+          <View accessibilityRole="alert" style={{ backgroundColor: colors.dangerSoft, padding: spacing.lg, borderRadius: radii.md }}>
+            <AppText style={{ color: colors.danger }}>{actionError}</AppText>
+            <AppButton title="Entendi" variant="ghost" onPress={() => setActionError("")} />
+          </View>
+        ) : null}
         <CareHeader
           avatar={settings.profileAvatar}
           title={`${greeting}${settings.userName.trim() ? `, ${settings.userName.trim()}` : ""}`}

@@ -14,6 +14,8 @@ function rowToSchedule(row: any): MedicationSchedule {
     anchorAt: row.anchor_at || "",
     snoozeMinutes: row.snooze_minutes,
     isActive: row.is_active === 1,
+    ...(row.effective_from && { effectiveFrom: row.effective_from }),
+    ...(row.effective_until && { effectiveUntil: row.effective_until }),
   };
 }
 
@@ -48,8 +50,8 @@ export function createScheduleRepository(db: NativeDB) {
 
   async function create(schedule: MedicationSchedule): Promise<void> {
     await db.runAsync(
-      `INSERT INTO medication_schedules (id, medication_id, kind, times, interval_hours, weekdays, start_date, end_date, anchor_at, snooze_minutes, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO medication_schedules (id, medication_id, kind, times, interval_hours, weekdays, start_date, end_date, anchor_at, snooze_minutes, is_active, effective_from, effective_until)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       schedule.id,
       schedule.medicationId,
       schedule.kind,
@@ -60,13 +62,15 @@ export function createScheduleRepository(db: NativeDB) {
       schedule.endDate,
       schedule.anchorAt,
       schedule.snoozeMinutes,
-      schedule.isActive ? 1 : 0
+      schedule.isActive ? 1 : 0,
+      schedule.effectiveFrom || "",
+      schedule.effectiveUntil || ""
     );
   }
 
   async function update(schedule: MedicationSchedule): Promise<void> {
     await db.runAsync(
-      `UPDATE medication_schedules SET kind = ?, times = ?, interval_hours = ?, weekdays = ?, start_date = ?, end_date = ?, anchor_at = ?, snooze_minutes = ?, is_active = ?
+      `UPDATE medication_schedules SET kind = ?, times = ?, interval_hours = ?, weekdays = ?, start_date = ?, end_date = ?, anchor_at = ?, snooze_minutes = ?, is_active = ?, effective_from = ?, effective_until = ?
        WHERE id = ?`,
       schedule.kind,
       JSON.stringify(schedule.times),
@@ -77,6 +81,8 @@ export function createScheduleRepository(db: NativeDB) {
       schedule.anchorAt,
       schedule.snoozeMinutes,
       schedule.isActive ? 1 : 0,
+      schedule.effectiveFrom || "",
+      schedule.effectiveUntil || "",
       schedule.id
     );
   }

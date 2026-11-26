@@ -5,10 +5,24 @@ import TestRenderer, { act } from "react-test-renderer";
 import { DoseAlarmScreen } from "../../screens/DoseAlarmScreen";
 import { AppThemeProvider } from "../ThemeProvider";
 import { themes } from "../theme";
+import { executeDefaultNotificationCommand } from "../../services/reminders/notificationEventHandler";
 
 jest.mock("react-native/Libraries/Utilities/useColorScheme", () => ({ __esModule: true, default: jest.fn() }));
 jest.mock("../../database/openAppDatabase", () => ({ openAppDatabase: jest.fn() }));
-jest.mock("../../services/reminders/notificationEventHandler", () => ({ executeDefaultNotificationCommand: jest.fn().mockResolvedValue(undefined) }));
+jest.mock("../../services/reminders/notificationEventHandler", () => ({ executeDefaultNotificationCommand: jest.fn().mockResolvedValue({ status: "test-ended" }) }));
+
+it("keeps the alarm open and explains when the snooze limit is reached", async () => {
+  jest.mocked(executeDefaultNotificationCommand).mockResolvedValueOnce({ status: "snooze-limit", snoozeCount: 3 });
+  const onClose = jest.fn();
+  const payload = { notificationId: "dose-limit", title: "Medicamento", body: "", data: { artifactKind: "doseAlarm", showDetails: "true" } };
+  let renderer!: ReturnType<typeof TestRenderer.create>;
+  await act(async () => { renderer = TestRenderer.create(<AppThemeProvider><DoseAlarmScreen embedded onClose={onClose} payload={payload} /></AppThemeProvider>); });
+  const button = renderer.root.findByProps({ accessibilityLabel: "Adiar Medicamento por cinco minutos" });
+  await act(async () => { await button.props.onPress(); });
+  expect(onClose).not.toHaveBeenCalled();
+  expect(JSON.stringify(renderer.toJSON())).toContain("Esta dose já foi adiada 3 vezes");
+  await act(async () => renderer.unmount());
+});
 
 it.each(["light", "dark"] as const)("renders the alarm action in %s and ends a test alarm", async (scheme) => {
   (useColorScheme as jest.MockedFunction<typeof useColorScheme>).mockReturnValue(scheme);

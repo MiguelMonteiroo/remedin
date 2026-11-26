@@ -74,8 +74,7 @@ export function useOnboardingPermissions(
         const granted = permissions.notifications === "granted";
         await updateNotificationsEnabled(granted);
         if (granted) {
-          await updateReminderSettings({ showLockScreenDetails: true });
-          transitionToStep("exact");
+          transitionToStep("lockScreenDetails");
         } else {
           setPermissionMessage(
             "As notificações continuam desativadas. Ative a opção do Remedin nas configurações ou toque em Agora não."
@@ -156,8 +155,7 @@ export function useOnboardingPermissions(
 
       if (action === "continue") {
         await updateNotificationsEnabled(true);
-        await updateReminderSettings({ showLockScreenDetails: true });
-        transitionToStep("exact");
+        transitionToStep("lockScreenDetails");
         return;
       }
 
@@ -174,8 +172,7 @@ export function useOnboardingPermissions(
       const result = await requestNotificationPermission();
       await updateNotificationsEnabled(result.granted);
       if (result.granted) {
-        await updateReminderSettings({ showLockScreenDetails: true });
-        transitionToStep("exact");
+        transitionToStep("lockScreenDetails");
       } else {
         setPermissionMessage(
           "As notificações não foram autorizadas. Tente novamente ou toque em Agora não para continuar sem lembretes."
@@ -204,6 +201,16 @@ export function useOnboardingPermissions(
         "Na próxima tela, permita que o Remedin defina alarmes e lembretes no horário exato."
       );
       await openExactAlarmSettings();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function chooseLockScreenDetails(showDetails: boolean) {
+    setBusy(true);
+    try {
+      await updateReminderSettings({ showLockScreenDetails: showDetails });
+      transitionToStep("exact");
     } finally {
       setBusy(false);
     }
@@ -309,6 +316,7 @@ export function useOnboardingPermissions(
     dndConfigured,
     batteryConfigured,
     requestBasicNotifications,
+    chooseLockScreenDetails,
     requestExactAlarms,
     requestFullScreenAlarm,
     requestDoNotDisturbAccess,

@@ -37,14 +37,16 @@ it.each(["light", "dark"] as const)("renders the pending dose in %s and keeps Ta
   const name = renderer.root.findAllByType(Text).find((node: { props: { children?: unknown } }) => node.props.children === "Dipirona");
   expect(StyleSheet.flatten(name.props.style).color).toBe(themes[scheme].text);
 
-  await act(async () => renderer.root.findByProps({ accessibilityLabel: "Marcar dose como tomada" }).props.onPress());
+  const stopPropagation = jest.fn();
+  await act(async () => renderer.root.findByProps({ accessibilityLabel: "Marcar dose como tomada" }).props.onPress({ stopPropagation }));
   expect(onTake).toHaveBeenCalledTimes(1);
 
-  await act(async () => renderer.root.findByProps({ accessibilityLabel: "Adiar dose de Dipirona por 5 minutos" }).props.onPress());
+  await act(async () => renderer.root.findByProps({ accessibilityLabel: "Adiar dose de Dipirona por 5 minutos" }).props.onPress({ stopPropagation }));
   expect(onSnooze).toHaveBeenCalledTimes(1);
 
-  await act(async () => renderer.root.findByProps({ accessibilityLabel: "Pular dose de Dipirona" }).props.onPress());
+  await act(async () => renderer.root.findByProps({ accessibilityLabel: "Pular dose de Dipirona" }).props.onPress({ stopPropagation }));
   expect(onSkip).toHaveBeenCalledTimes(1);
+  expect(stopPropagation).toHaveBeenCalledTimes(3);
 
   await act(async () => renderer.unmount());
 });

@@ -11,6 +11,7 @@ export const ONBOARDING_PERMISSION_STEPS = [
 
 export const ESSENTIAL_ONBOARDING_PERMISSION_STEPS = [
   "notifications",
+  "lockScreenDetails",
   "exact",
   "fullScreen",
 ] as const;

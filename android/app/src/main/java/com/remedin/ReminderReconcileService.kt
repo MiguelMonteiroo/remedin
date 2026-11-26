@@ -9,7 +9,9 @@ class ReminderReconcileService : HeadlessJsTaskService() {
   override fun getTaskConfig(intent: Intent?): HeadlessJsTaskConfig =
       HeadlessJsTaskConfig(
           "RemedinReminderReconcile",
-          Arguments.createMap(),
+          Arguments.createMap().apply {
+            putString("requestId", intent?.getStringExtra("requestId"))
+          },
           30_000,
           true,
       )

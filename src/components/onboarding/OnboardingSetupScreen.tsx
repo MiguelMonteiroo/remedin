@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Clock3,
   Maximize2,
+  LockKeyhole,
   ShieldCheck,
   Volume2,
 } from "lucide-react-native";
@@ -31,6 +32,7 @@ import { ProfileAvatarPicker } from "../ProfileAvatarPicker";
 import { AppText } from "../ui/AppText";
 import { ConfirmationDialog } from "../ui/ConfirmationDialog";
 import { Screen } from "../ui/Screen";
+import { ptBR } from "../../i18n/ptBR";
 import { createOnboardingStyles } from "./onboardingStyles";
 import type { OnboardingSetupStep } from "./onboardingTypes";
 
@@ -132,8 +134,8 @@ export function OnboardingSetupScreen({
             <View
               accessibilityLabel={
                 step === "ready"
-                  ? "Todas as 3 etapas concluídas"
-                  : `Progresso: etapa ${activeProgressIndex + 1} de 3`
+                  ? `Todas as ${ESSENTIAL_ONBOARDING_PERMISSION_STEPS.length} etapas concluídas`
+                  : `Progresso: etapa ${activeProgressIndex + 1} de ${ESSENTIAL_ONBOARDING_PERMISSION_STEPS.length}`
               }
               style={styles.progressTrack}
             >
@@ -191,10 +193,11 @@ export function OnboardingSetupScreen({
           </Pressable>
 
           {step === "notifications" ||
+          step === "lockScreenDetails" ||
           step === "exact" ||
           step === "fullScreen" ? (
             <Pressable
-              accessibilityLabel={`Fazer ${getStepTitle(step).toLowerCase()} depois`}
+              accessibilityLabel={step === "lockScreenDetails" ? ptBR.onboardingPrivacy.hide : `Fazer ${getStepTitle(step).toLowerCase()} depois`}
               accessibilityRole="button"
               disabled={busy}
               onPress={onSkip}
@@ -203,7 +206,7 @@ export function OnboardingSetupScreen({
                 pressed && styles.pillPressed,
               ]}
             >
-              <AppText style={styles.secondaryPillText}>Agora não</AppText>
+              <AppText style={styles.secondaryPillText}>{step === "lockScreenDetails" ? ptBR.onboardingPrivacy.hide : "Agora não"}</AppText>
             </Pressable>
           ) : null}
         </View>
@@ -431,7 +434,7 @@ function OnboardingStepContent({
       {step === "notifications" ? (
         <View style={styles.benefitList}>
           <BenefitRow text="Aviso 5 minutos antes e na hora da dose" />
-          <BenefitRow text="Nome e dosagem visíveis na tela bloqueada" />
+          <BenefitRow text={ptBR.onboardingPrivacy.choiceBenefit} />
           <BenefitRow text="Você pode ajustar esses avisos depois em Perfil" last />
         </View>
       ) : null}
@@ -461,6 +464,11 @@ function OnboardingStepContent({
 }
 
 const PERMISSION_CONTENT = {
+  lockScreenDetails: {
+    title: ptBR.onboardingPrivacy.title,
+    description: ptBR.onboardingPrivacy.description,
+    icon: LockKeyhole,
+  },
   notifications: {
     title: "Receba seus lembretes",
     description:
@@ -538,6 +546,7 @@ function AlarmPreview() {
 
 function getPrimaryTitle(step: OnboardingSetupStep, busy: boolean): string {
   if (busy) return "Aguarde...";
+  if (step === "lockScreenDetails") return ptBR.onboardingPrivacy.show;
   if (step === "profile") return "Continuar";
   if (step === "notifications") return "Permitir notificações";
   if (step === "exact") return "Permitir horário exato";

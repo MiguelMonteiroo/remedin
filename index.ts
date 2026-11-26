@@ -1,4 +1,4 @@
-import { AppRegistry } from "react-native";
+import { AppRegistry, NativeModules } from "react-native";
 import notifee from "@notifee/react-native";
 import App from "./App";
 import {
@@ -13,7 +13,15 @@ notifee.onBackgroundEvent(handleNotifeeEvent);
 AppRegistry.registerComponent("Remedin", () => App);
 AppRegistry.registerHeadlessTask(
   "RemedinReminderReconcile",
-  () => reconcileRemindersFromBackground
+  () => async ({ requestId }: { requestId?: string }) => {
+    let success = false;
+    try {
+      await reconcileRemindersFromBackground();
+      success = true;
+    } finally {
+      if (requestId) NativeModules.ReminderPermissions.completeReminderReconcile(requestId, success);
+    }
+  }
 );
 AppRegistry.registerHeadlessTask("RemedinAlarmAction", () => async (command) => {
   await executeDefaultNotificationCommand(command);

@@ -5,7 +5,7 @@ import type { ScheduleRepository } from "../database/repositories/scheduleReposi
 import type { DoseLogRepository } from "../database/repositories/doseLogRepository";
 import type { SettingsRepository } from "../database/repositories/settingsRepository";
 import {
-  generateDoseOccurrencesForDate,
+  generateMedicationOccurrencesForDate,
   indexLatestDoseLogs,
   resolveDoseOccurrence,
 } from "../utils/doseEngine";
@@ -13,7 +13,7 @@ import type { ReminderScheduler } from "./reminderScheduler";
 import { getNotificationPermissionStatus } from "./notificationPermissionService";
 import { planOccurrenceReminders } from "./reminders/reminderPlanner";
 import type { PlannedReminder } from "./reminders/reminderPlanner";
-import type { ReminderArtifact } from "../types/domain";
+import type { DoseOccurrence, ReminderArtifact } from "../types/domain";
 import { formatLocalDate } from "../utils/dateTime";
 
 function addDays(date: Date, days: number): Date {
@@ -64,12 +64,42 @@ export async function reconcileNotifications(
   const activeNotifeeIds = new Set(notifeeIds);
   const activeNativeIds = new Set(nativeIds);
   const storedArtifacts = await artifactRepo.getAll();
+  const [medications, schedules, logs] = await Promise.all([
+    medicationRepo.getAll(), scheduleRepo.getAll(), doseLogRepo.getAll(),
+  ]);
+  const latestDoseLogs = indexLatestDoseLogs(logs);
+  const cancelledOccurrences = new Set<string>();
+  const slotsByDay = new Map<string, DoseOccurrence[]>();
   const now = Date.now();
   const staleBefore = now - 15 * 60 * 1000;
   let removed = 0;
 
   for (const artifact of storedArtifacts) {
     const scheduledAt = new Date(artifact.scheduledFor).getTime();
+    const medication = medications.find((item) => item.id === artifact.medicationId);
+    const schedule = schedules.find((item) => item.id === artifact.scheduleId);
+    const latestLog = latestDoseLogs.get(artifact.doseOccurrenceId);
+    const date = artifact.doseWindowKey.slice(0, 10);
+    const cacheKey = `${artifact.medicationId}:${date}`;
+    if (medication && !slotsByDay.has(cacheKey)) {
+      slotsByDay.set(cacheKey, generateMedicationOccurrencesForDate(
+        medication, schedules.filter((item) => item.medicationId === medication.id),
+        date, latestDoseLogs, new Date(now)
+      ));
+    }
+    const recordedSlot = slotsByDay.get(cacheKey)?.find((item) => item.scheduledAt.slice(0, 16) === artifact.doseWindowKey);
+    if (scheduledAt > now && (
+      !medication || medication.isPaused || !schedule ||
+      (!schedule.isActive && latestLog?.action !== "snoozed") ||
+      recordedSlot?.status === "taken" || recordedSlot?.status === "skipped" ||
+      latestLog?.action === "taken" || latestLog?.action === "skipped"
+    )) {
+      if (!cancelledOccurrences.has(artifact.doseOccurrenceId)) {
+        await reminderScheduler.cancelSingle(artifact.doseOccurrenceId);
+        cancelledOccurrences.add(artifact.doseOccurrenceId);
+      }
+      continue;
+    }
     const missingTrigger = !isReminderArtifactActive(
       artifact,
       activeNotifeeIds,
@@ -89,9 +119,6 @@ export async function reconcileNotifications(
     return { removed, recreated: 0 };
   }
 
-  const medications = await medicationRepo.getAll();
-  const schedules = await scheduleRepo.getAll();
-  const latestDoseLogs = indexLatestDoseLogs(await doseLogRepo.getAll());
   const horizon = now + 48 * 60 * 60 * 1000;
   const referenceTime = new Date(now);
   const today = formatLocalDate(referenceTime);
@@ -100,26 +127,29 @@ export async function reconcileNotifications(
   for (const medication of medications) {
     if (medication.isPaused) continue;
     const medicationSchedules = schedules.filter(
-      (schedule) => schedule.medicationId === medication.id && schedule.isActive
+      (schedule) => schedule.medicationId === medication.id && (schedule.isActive || Boolean(schedule.effectiveUntil))
     );
 
-    for (const schedule of medicationSchedules) {
       const occurrences = Array.from({ length: 4 }, (_, index) =>
-        generateDoseOccurrencesForDate(
+        generateMedicationOccurrencesForDate(
           medication,
-          schedule,
-          formatLocalDate(addDays(referenceTime, index - 1))
+          medicationSchedules,
+          formatLocalDate(addDays(referenceTime, index - 1)),
+          latestDoseLogs,
+          referenceTime
         )
       )
         .flat();
 
       for (const originalOccurrence of occurrences) {
-        const { occurrence } = resolveDoseOccurrence(
+        const schedule = medicationSchedules.find((item) => item.id === originalOccurrence.scheduleId);
+        if (!schedule) continue;
+        const { occurrence, latestLog } = resolveDoseOccurrence(
           originalOccurrence,
           latestDoseLogs,
           referenceTime
         );
-        if (originalOccurrence.scheduledAt.slice(0, 10) < today && occurrence.status !== "snoozed") continue;
+        if (originalOccurrence.scheduledAt.slice(0, 10) < today && latestLog?.action !== "snoozed") continue;
         let artifacts = await artifactRepo.getByDoseOccurrenceId(occurrence.id);
         if (occurrence.status === "taken" || occurrence.status === "skipped") {
           if (artifacts.length > 0) {
@@ -131,7 +161,7 @@ export async function reconcileNotifications(
         const effectiveTimestamp = new Date(occurrence.scheduledAt).getTime();
         if (effectiveTimestamp <= now || effectiveTimestamp > horizon) continue;
 
-        const snoozed = occurrence.status === "snoozed";
+        const snoozed = latestLog?.action === "snoozed";
         const planOptions = snoozed
           ? { snoozed: true, alarmAt: new Date(occurrence.scheduledAt) }
           : {};
@@ -169,7 +199,6 @@ export async function reconcileNotifications(
         );
         recreated += ids.length;
       }
-    }
   }
 
   return { removed, recreated };

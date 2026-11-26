@@ -21,6 +21,8 @@ export function createSettingsRepository(db: NativeDB) {
       map[row.key] = row.value;
     }
     const profileAvatar = PROFILE_AVATARS.find((avatar) => avatar === map.profileAvatar);
+    const steps: NonNullable<ReminderSettings["onboardingStep"]>[] = ["welcome", "profile", "guide", "notifications", "lockScreenDetails", "exact", "fullScreen", "ready"];
+    const onboardingStep = steps.find((step) => step === map.onboardingStep);
     return {
       notificationsEnabled:
         map.notificationsEnabled === "true" ||
@@ -33,6 +35,7 @@ export function createSettingsRepository(db: NativeDB) {
       reminderSetupCompleted: map.reminderSetupCompleted === "true",
       onboardingCompleted: map.onboardingCompleted === "true",
       ...(profileAvatar && { profileAvatar }),
+      ...(onboardingStep && { onboardingStep }),
       ...(map.onboardingIntroSeen === "true" && { onboardingIntroSeen: true }),
     };
   }

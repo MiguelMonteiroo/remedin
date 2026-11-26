@@ -1,6 +1,6 @@
 import { createBottomTabNavigator, type BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import { Home, Pill, History, UserRound, type LucideIcon } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { HomeScreen } from "../screens/HomeScreen";
@@ -68,6 +68,7 @@ function MainTabs() {
 }
 
 export function BottomNavigationBar({ state, navigation }: BottomTabBarProps) {
+  const { fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
 
@@ -117,7 +118,7 @@ export function BottomNavigationBar({ state, navigation }: BottomTabBarProps) {
               variant="caption"
               weight={focused ? "bold" : "medium"}
             >
-              {config.label}
+              {route.name === "Medications" && fontScale >= 1.3 ? ptBR.tabs.medicationsShort : config.label}
             </AppText>
           </Pressable>
         );

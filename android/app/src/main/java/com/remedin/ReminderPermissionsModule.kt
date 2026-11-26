@@ -24,6 +24,11 @@ class ReminderPermissionsModule(
 
   override fun getName(): String = "ReminderPermissions"
 
+  @ReactMethod
+  fun completeReminderReconcile(requestId: String, success: Boolean) {
+    ReminderReconcileWorker.complete(requestId, success)
+  }
+
   private fun notificationManager(): NotificationManager =
       reactApplicationContext.getSystemService(Context.NOTIFICATION_SERVICE)
           as NotificationManager

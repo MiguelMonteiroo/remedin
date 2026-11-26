@@ -17,6 +17,12 @@ function occursAfterMedicationCreation(
   return scheduledAt >= createdAt;
 }
 
+function occursDuringSchedule(occurrence: DoseOccurrence, schedule: MedicationSchedule): boolean {
+  const timestamp = new Date(occurrence.scheduledAt).getTime();
+  return (!schedule.effectiveFrom || timestamp >= new Date(schedule.effectiveFrom).getTime()) &&
+    (!schedule.effectiveUntil || timestamp < new Date(schedule.effectiveUntil).getTime());
+}
+
 function getDayOfWeek(dateString: string): number {
   const date = new Date(dateString + "T12:00:00");
   return date.getDay();
@@ -90,13 +96,13 @@ export function generateDoseOccurrencesForDate(
   schedule: MedicationSchedule,
   date: string
 ): DoseOccurrence[] {
-  if (medication.isPaused) return [];
-  if (!schedule.isActive) return [];
+  if (medication.isPaused && !schedule.effectiveUntil) return [];
+  if (!schedule.isActive && !schedule.effectiveUntil) return [];
   if (!isDateInRange(date, schedule.startDate, schedule.endDate)) return [];
 
   if (schedule.kind === "intervalHours") {
     return generateIntervalOccurrences(medication, schedule, date).filter(
-      (occurrence) => occursAfterMedicationCreation(occurrence, medication)
+      (occurrence) => occursAfterMedicationCreation(occurrence, medication) && occursDuringSchedule(occurrence, schedule)
     );
   }
 
@@ -114,7 +120,7 @@ export function generateDoseOccurrencesForDate(
       status: "pending" as DoseStatus,
     }))
     .filter((occurrence) =>
-      occursAfterMedicationCreation(occurrence, medication)
+      occursAfterMedicationCreation(occurrence, medication) && occursDuringSchedule(occurrence, schedule)
     );
 }
 
@@ -183,11 +189,11 @@ export function resolveDoseOccurrence(
   now = new Date()
 ): { occurrence: DoseOccurrence; latestLog: DoseLog | null } {
   const latestLog = getLatestDoseLog(occurrence.id, logs);
-  const status = resolveStatusFromLog(latestLog, occurrence.scheduledAt, now);
   const scheduledAt =
-    status === "snoozed" && latestLog?.action === "snoozed"
+    latestLog?.action === "snoozed"
       ? normalizeDoseDateTime(latestLog.snoozedUntil)
       : occurrence.scheduledAt;
+  const status = resolveStatusFromLog(latestLog, scheduledAt, now);
 
   return {
     occurrence: { ...occurrence, scheduledAt, status },
@@ -212,11 +218,7 @@ export function getTodayDoseViewModel(
 
   const allOccurrences: DoseOccurrence[] = [];
   for (const medication of medications) {
-    for (const schedule of schedulesByMedication.get(medication.id) ?? []) {
-      for (const occurrence of generateDoseOccurrencesForDate(medication, schedule, date)) {
-        allOccurrences.push(resolveDoseOccurrence(occurrence, latestLogs, now).occurrence);
-      }
-    }
+    allOccurrences.push(...generateMedicationOccurrencesForDate(medication, schedulesByMedication.get(medication.id) ?? [], date, latestLogs, now));
   }
 
   allOccurrences.sort(
@@ -228,6 +230,51 @@ export function getTodayDoseViewModel(
     occurrences: allOccurrences,
     summary: getAdherenceSummary(allOccurrences),
   };
+}
+
+export function generateMedicationOccurrencesForDate(
+  medication: Medication,
+  schedules: MedicationSchedule[],
+  date: string,
+  latestLogs: ReadonlyMap<string, DoseLog>,
+  now = new Date()
+): DoseOccurrence[] {
+  const bySlot = new Map<string, DoseOccurrence>();
+  for (const schedule of schedules) {
+    for (const occurrence of generateResolvedOccurrencesForDate(medication, schedule, date, latestLogs, now)) {
+      const previous = bySlot.get(occurrence.scheduledAt);
+      const log = latestLogs.get(occurrence.id);
+      const previousLog = previous && latestLogs.get(previous.id);
+      if (!previous || (log && (!previousLog || log.actionAt >= previousLog.actionAt))) {
+        bySlot.set(occurrence.scheduledAt, occurrence);
+      }
+    }
+  }
+  return [...bySlot.values()];
+}
+
+export function generateResolvedOccurrencesForDate(
+  medication: Medication,
+  schedule: MedicationSchedule,
+  date: string,
+  latestLogs: ReadonlyMap<string, DoseLog>,
+  now = new Date()
+): DoseOccurrence[] {
+  const occurrences = generateDoseOccurrencesForDate(medication, schedule, date);
+  const ids = new Set(occurrences.map((item) => item.id));
+  // Explicit records outlive edits to recurrence coverage, including early intake.
+  const originalOccurrences = generateDoseOccurrencesForDate(
+    { ...medication, isPaused: false },
+    { ...schedule, isActive: true, effectiveFrom: undefined, effectiveUntil: undefined },
+    date
+  );
+  for (const occurrence of originalOccurrences) {
+    const log = latestLogs.get(occurrence.id);
+    if (!ids.has(occurrence.id) && log && ["taken", "skipped", "snoozed"].includes(log.action)) {
+      occurrences.push(occurrence);
+    }
+  }
+  return occurrences.map((occurrence) => resolveDoseOccurrence(occurrence, latestLogs, now).occurrence);
 }
 
 export interface AdherenceSummary {

@@ -1,5 +1,12 @@
 export const ptBR = {
   appName: "Remedin",
+  onboardingPrivacy: {
+    title: "Mostrar detalhes na tela bloqueada?",
+    description: "Você pode mostrar nome, dosagem e observações do medicamento sem desbloquear o aparelho. Outras pessoas também poderão ver essas informações. Se preferir ocultar, os lembretes continuam funcionando. Você pode mudar essa escolha depois em Perfil.",
+    show: "Mostrar detalhes",
+    hide: "Manter detalhes ocultos",
+    choiceBenefit: "Você escolhe se os detalhes aparecem na tela bloqueada",
+  },
   privacy: {
     open: "Privacidade e uso",
     updatedAt: "Atualizada em",
@@ -10,6 +17,7 @@ export const ptBR = {
   tabs: {
     today: "Hoje",
     medications: "Medicamentos",
+    medicationsShort: "Lista",
     history: "Histórico",
     profile: "Perfil",
   },

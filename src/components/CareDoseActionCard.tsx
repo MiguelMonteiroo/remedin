@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import { Check, Clock3, SkipForward } from "lucide-react-native";
 import { AppText } from "./ui/AppText";
 import { useAppTheme } from "../theme/ThemeProvider";
@@ -15,6 +15,8 @@ type Props = {
   onSnooze?: () => void;
   onSkip?: () => void;
   onPress?: () => void;
+  disabled?: boolean;
+  busy?: boolean;
 };
 
 export function CareDoseActionCard({
@@ -26,9 +28,13 @@ export function CareDoseActionCard({
   onSnooze,
   onSkip,
   onPress,
+  disabled = false,
+  busy = false,
 }: Props) {
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
+  const { width, fontScale } = useWindowDimensions();
+  const expandedLayout = width < 360 || fontScale >= 1.3;
   const hasSecondaryActions = Boolean(onSnooze || onSkip);
 
   return (
@@ -38,8 +44,8 @@ export function CareDoseActionCard({
       onPress={onPress}
       style={({ pressed }) => [styles.container, pressed && styles.pressed]}
     >
-      <View style={styles.mainRow}>
-        <View style={styles.iconBox}>
+      <View style={[styles.mainRow, expandedLayout && { flexWrap: "wrap" }]}>
+        <View style={[styles.iconBox, expandedLayout && { minWidth: 84 }]}>
           <AppText
             ellipsizeMode="clip"
             numberOfLines={1}
@@ -63,10 +69,12 @@ export function CareDoseActionCard({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Marcar dose como tomada"
-          onPress={onTake}
-          style={({ pressed }) => [styles.takeButton, pressed && styles.pressed]}
+          accessibilityState={{ disabled, busy }}
+          disabled={disabled}
+          onPress={(event) => { event.stopPropagation(); onTake(); }}
+          style={({ pressed }) => [styles.takeButton, expandedLayout && { width: "100%" }, disabled && { opacity: 0.6 }, pressed && styles.pressed]}
         >
-          <Check color={colors.onPrimary} size={18} strokeWidth={2.6} />
+          {busy ? <ActivityIndicator color={colors.onPrimary} size="small" /> : <Check color={colors.onPrimary} size={18} strokeWidth={2.6} />}
           <AppText variant="small" weight="bold" style={styles.takeText}>
             Tomar
           </AppText>
@@ -79,7 +87,9 @@ export function CareDoseActionCard({
             <Pressable
               accessibilityLabel={`Adiar dose de ${name} por ${snoozeMinutes} minutos`}
               accessibilityRole="button"
-              onPress={onSnooze}
+              accessibilityState={{ disabled, busy }}
+              disabled={disabled}
+              onPress={(event) => { event.stopPropagation(); onSnooze(); }}
               style={({ pressed }) => [
                 styles.secondaryPill,
                 pressed && styles.pressed,
@@ -96,7 +106,9 @@ export function CareDoseActionCard({
             <Pressable
               accessibilityLabel={`Pular dose de ${name}`}
               accessibilityRole="button"
-              onPress={onSkip}
+              accessibilityState={{ disabled, busy }}
+              disabled={disabled}
+              onPress={(event) => { event.stopPropagation(); onSkip(); }}
               style={({ pressed }) => [
                 styles.secondaryPill,
                 pressed && styles.pressed,
@@ -190,7 +202,7 @@ const createStyles = (colors: ThemeColors) =>
       flexDirection: "row",
       gap: 6,
       justifyContent: "center",
-      minHeight: 44,
+      minHeight: 48,
       paddingHorizontal: spacing.md,
     },
     secondaryPillText: {

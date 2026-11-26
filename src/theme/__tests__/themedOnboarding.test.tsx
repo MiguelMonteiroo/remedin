@@ -27,6 +27,8 @@ jest.mock("react-native-safe-area-context", () => {
 
 const mockUpdateProfile = jest.fn().mockResolvedValue(undefined);
 let mockUserName = "Helena Costa";
+let mockOnboardingStep: "exact" | undefined;
+const mockSaveOnboardingStep = jest.fn().mockResolvedValue(undefined);
 const mockCompleteOnboarding = jest.fn().mockResolvedValue(undefined);
 const mockUpdateNotificationsEnabled = jest.fn().mockResolvedValue(undefined);
 const mockUpdateReminderSettings = jest.fn().mockResolvedValue(undefined);
@@ -56,6 +58,7 @@ jest.mock("../../services/appDataProvider", () => ({
       notificationsEnabled: false,
       defaultSnoozeMinutes: 5,
       userName: mockUserName,
+      onboardingStep: mockOnboardingStep,
       fullScreenAlarmEnabled: false,
       criticalAlertsEnabled: false,
       showLockScreenDetails: false,
@@ -63,6 +66,7 @@ jest.mock("../../services/appDataProvider", () => ({
       onboardingCompleted: false,
     },
     updateProfile: mockUpdateProfile,
+    saveOnboardingStep: mockSaveOnboardingStep,
     completeOnboarding: mockCompleteOnboarding,
     updateNotificationsEnabled: mockUpdateNotificationsEnabled,
     updateReminderSettings: mockUpdateReminderSettings,
@@ -73,6 +77,18 @@ describe("Brand splash and local onboarding", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUserName = "Helena Costa";
+    mockOnboardingStep = undefined;
+  });
+
+  it("resumes the persisted setup step after a new mount", async () => {
+    mockOnboardingStep = "exact";
+    let renderer!: ReturnType<typeof TestRenderer.create>;
+    await act(async () => {
+      renderer = TestRenderer.create(<AppThemeProvider><FirstRunOnboarding /></AppThemeProvider>);
+    });
+    expect(JSON.stringify(renderer.toJSON())).toContain("Passo 3 de 4");
+    expect(mockSaveOnboardingStep).toHaveBeenCalledWith("exact");
+    await act(async () => renderer.unmount());
   });
 
   it("renders BrandSplashScreen with Coral identity and status copy", async () => {
@@ -141,7 +157,7 @@ describe("Brand splash and local onboarding", () => {
     await act(async () => renderer.unmount());
   });
 
-  it("walks through the 3 essential permission steps to the ready completion screen", async () => {
+  it("asks about lockscreen details before continuing setup", async () => {
     (useColorScheme as jest.MockedFunction<typeof useColorScheme>).mockReturnValue("light");
     let renderer!: ReturnType<typeof TestRenderer.create>;
     await act(async () => {
@@ -161,7 +177,7 @@ describe("Brand splash and local onboarding", () => {
       await (startPermsBtn.props.onClick?.() ?? startPermsBtn.props.onPress?.());
     });
 
-    expect(JSON.stringify(renderer.toJSON())).toContain("Passo 1 de 3");
+    expect(JSON.stringify(renderer.toJSON())).toContain("Passo 1 de 4");
     expect(JSON.stringify(renderer.toJSON())).toContain("Receba seus lembretes");
 
     // Step 1/3 -> Step 2/3 (exact)
@@ -174,10 +190,18 @@ describe("Brand splash and local onboarding", () => {
     });
 
     expect(mockUpdateNotificationsEnabled).toHaveBeenCalledWith(true);
+    expect(mockUpdateReminderSettings).not.toHaveBeenCalledWith({ showLockScreenDetails: true });
+    expect(JSON.stringify(renderer.toJSON())).toContain("Passo 2 de 4");
+    expect(JSON.stringify(renderer.toJSON())).toContain("Mostrar detalhes na tela bloqueada?");
+    const showDetails = renderer.root.findByProps({
+      accessibilityRole: "button",
+      accessibilityLabel: "Mostrar detalhes",
+    });
+    await act(async () => { await showDetails.props.onPress(); });
     expect(mockUpdateReminderSettings).toHaveBeenCalledWith({
       showLockScreenDetails: true,
     });
-    expect(JSON.stringify(renderer.toJSON())).toContain("Passo 2 de 3");
+    expect(JSON.stringify(renderer.toJSON())).toContain("Passo 3 de 4");
     expect(JSON.stringify(renderer.toJSON())).toContain("Avise no horário certo");
 
     // Step 2/3 -> Step 3/3 (fullScreen)
@@ -189,7 +213,7 @@ describe("Brand splash and local onboarding", () => {
       await (allowExactBtn.props.onClick?.() ?? allowExactBtn.props.onPress?.());
     });
 
-    expect(JSON.stringify(renderer.toJSON())).toContain("Passo 3 de 3");
+    expect(JSON.stringify(renderer.toJSON())).toContain("Passo 4 de 4");
     expect(JSON.stringify(renderer.toJSON())).toContain("Alarme em tela cheia");
 
     // Step 3/3 -> Ready summary screen
@@ -219,6 +243,33 @@ describe("Brand splash and local onboarding", () => {
     await act(async () => renderer.unmount());
   });
 
+  it("keeps details hidden when the user declines and returns to the choice with Back", async () => {
+    let renderer!: ReturnType<typeof TestRenderer.create>;
+    await act(async () => {
+      renderer = TestRenderer.create(
+        <AppThemeProvider>
+          <FirstRunOnboarding initialStep="lockScreenDetails" />
+        </AppThemeProvider>
+      );
+    });
+    expect(mockUpdateReminderSettings).not.toHaveBeenCalled();
+    const hideDetails = renderer.root.findByProps({
+      accessibilityRole: "button",
+      accessibilityLabel: "Manter detalhes ocultos",
+    });
+    await act(async () => { await hideDetails.props.onPress(); });
+    expect(mockUpdateReminderSettings).toHaveBeenCalledWith({ showLockScreenDetails: false });
+    expect(mockUpdateReminderSettings).not.toHaveBeenCalledWith({ showLockScreenDetails: true });
+    expect(JSON.stringify(renderer.toJSON())).toContain("Passo 3 de 4");
+    const back = renderer.root.findByProps({
+      accessibilityRole: "button",
+      accessibilityLabel: "Voltar para a etapa anterior",
+    });
+    await act(async () => { back.props.onPress(); });
+    expect(JSON.stringify(renderer.toJSON())).toContain("Mostrar detalhes na tela bloqueada?");
+    await act(async () => renderer.unmount());
+  });
+
   it("checks exact alarm permission when returning from Android settings", async () => {
     const permissionState = jest.mocked(getReminderPermissionState);
     const granted = await permissionState();
@@ -245,7 +296,7 @@ describe("Brand splash and local onboarding", () => {
         await (allowExact.props.onClick ?? allowExact.props.onPress)();
       });
       expect(openExactAlarmSettings).toHaveBeenCalledTimes(1);
-      expect(JSON.stringify(renderer.toJSON())).toContain("Passo 2 de 3");
+      expect(JSON.stringify(renderer.toJSON())).toContain("Passo 3 de 4");
 
       expect(addEventListener).toHaveBeenCalledWith("change", expect.any(Function));
       const [, handleAppState] = addEventListener.mock.calls[0];

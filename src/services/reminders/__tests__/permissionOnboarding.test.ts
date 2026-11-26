@@ -17,9 +17,10 @@ describe("permission onboarding", () => {
     ]);
   });
 
-  it("defines the 3 essential first-run steps and 2 optional hardening steps", () => {
+  it("includes the privacy choice in first-run setup before exact alarms", () => {
     expect(ESSENTIAL_ONBOARDING_PERMISSION_STEPS).toEqual([
       "notifications",
+      "lockScreenDetails",
       "exact",
       "fullScreen",
     ]);

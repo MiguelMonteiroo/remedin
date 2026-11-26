@@ -1,6 +1,6 @@
 import type { NativeDB } from "./nativeDb";
 
-const DATABASE_VERSION = 4;
+const DATABASE_VERSION = 5;
 
 async function tableHasColumn(
   db: NativeDB,
@@ -237,6 +237,14 @@ export async function migrateDbIfNeeded(db: NativeDB) {
           'authAuthenticated', 'authName', 'authEmail', 'authProvider', 'authAccountsJson'
         );
       `);
+    }
+
+    if (currentVersion <= 4) {
+      for (const column of ["effective_from", "effective_until"]) {
+        if (!(await tableHasColumn(transaction, "medication_schedules", column))) {
+          await transaction.execAsync(`ALTER TABLE medication_schedules ADD COLUMN ${column} TEXT NOT NULL DEFAULT ''`);
+        }
+      }
     }
 
     await assertForeignKeyIntegrity(transaction);

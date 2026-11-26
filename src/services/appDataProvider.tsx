@@ -18,6 +18,7 @@ import {
   ReminderSettings,
 } from "../types/domain";
 import { createDoseService, DoseService } from "./doseService";
+import { createDoseOperationRunner, finishCommittedDoseAction } from "./doseOperation";
 import { createReminderScheduler } from "./reminderScheduler";
 import {
   ensureChannelCreated,
@@ -36,6 +37,7 @@ import {
 import { validateProfileName } from "../utils/validation";
 import { DEFAULT_REMINDER_SETTINGS } from "../utils/defaultReminderSettings";
 import { formatLocalDate, formatLocalDateTime } from "../utils/dateTime";
+import { getCurrentSchedule } from "../utils/currentSchedule";
 
 interface AppDataContextValue {
   medications: Medication[];
@@ -69,6 +71,7 @@ interface AppDataContextValue {
   ) => Promise<void>;
   updateProfile: (name: string, avatar?: ProfileAvatar) => Promise<void>;
   markOnboardingIntroSeen: () => Promise<void>;
+  saveOnboardingStep: (step: NonNullable<ReminderSettings["onboardingStep"]>) => Promise<void>;
   completeOnboarding: (name?: string) => Promise<void>;
   updateNotificationsEnabled: (enabled: boolean) => Promise<void>;
   updateReminderSettings: (patch: Partial<ReminderSettings>) => Promise<void>;
@@ -101,6 +104,7 @@ const AppDataContext = createContext<AppDataContextValue>({
   updateMedicationWithSchedule: async () => {},
   updateProfile: async () => {},
   markOnboardingIntroSeen: async () => {},
+  saveOnboardingStep: async () => {},
   completeOnboarding: async () => {},
   updateNotificationsEnabled: async () => {},
   updateReminderSettings: async () => {},
@@ -114,6 +118,7 @@ export function useAppData() {
 
 export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const db = useDatabase();
+  const runDoseOperation = useMemo(() => createDoseOperationRunner(), []);
   const [medications, setMedications] = useState<Medication[]>([]);
   const [schedules, setSchedules] = useState<MedicationSchedule[]>([]);
   const [logs, setLogs] = useState<DoseLog[]>([]);
@@ -297,49 +302,52 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       const medication = medications.find((m) => m.id === medicationId);
       if (!medication) return;
       const updated = { ...medication, isPaused: paused, updatedAt: new Date().toISOString() };
-      await reminderScheduler.cancelForMedication(medicationId);
-      await repos.medications.update(updated);
+      await medicationPersistence.setPaused(updated);
       setMedications((prev) => prev.map((m) => (m.id === medicationId ? updated : m)));
-      if (!paused) queueReminderSync();
+      setSchedules(await repos.schedules.getAll());
+      queueReminderSync(async () => {
+        await reminderScheduler.cancelForMedication(medicationId);
+        await syncReminders();
+      });
     },
-    [medications, queueReminderSync, reminderScheduler, repos]
+    [medications, medicationPersistence, queueReminderSync, reminderScheduler, repos, syncReminders]
   );
 
   const setDoseTaken = useCallback(
-    async (occurrenceId: string, medicationId: string, scheduleId: string, isTaken: boolean) => {
+    (occurrenceId: string, medicationId: string, scheduleId: string, isTaken: boolean) => runDoseOperation(occurrenceId, async () => {
       const now = new Date().toISOString();
       if (isTaken) {
         await doseSvc.undoDoseAction(occurrenceId, medicationId, scheduleId, now);
       } else {
         await doseSvc.markDoseTaken(occurrenceId, medicationId, scheduleId, now);
-        await reminderScheduler.cancelSingle(occurrenceId);
       }
-      await refreshDoseLogs();
-    },
-    []
+      await finishCommittedDoseAction(refreshDoseLogs, async () => {
+        if (isTaken) await syncReminders();
+        else await reminderScheduler.cancelSingle(occurrenceId);
+      }, queueReminderSync);
+    }),
+    [doseSvc, refreshDoseLogs, reminderScheduler, syncReminders, queueReminderSync, runDoseOperation]
   );
 
   const skipDose = useCallback(
-    async (occurrenceId: string, medicationId: string, scheduleId: string) => {
+    (occurrenceId: string, medicationId: string, scheduleId: string) => runDoseOperation(occurrenceId, async () => {
       const now = new Date().toISOString();
       await doseSvc.skipDose(occurrenceId, medicationId, scheduleId, now);
-      await reminderScheduler.cancelSingle(occurrenceId);
-      await refreshDoseLogs();
-    },
-    []
+      await finishCommittedDoseAction(refreshDoseLogs, () => reminderScheduler.cancelSingle(occurrenceId), queueReminderSync);
+    }),
+    [doseSvc, refreshDoseLogs, reminderScheduler, queueReminderSync, runDoseOperation]
   );
 
   const undoDoseAction = useCallback(
-    async (occurrenceId: string, medicationId: string, scheduleId: string) => {
+    (occurrenceId: string, medicationId: string, scheduleId: string) => runDoseOperation(occurrenceId, async () => {
       await doseSvc.undoDoseAction(
         occurrenceId,
         medicationId,
         scheduleId,
         new Date().toISOString()
       );
-      await refreshDoseLogs();
-
-      if (settingsRef.current.notificationsEnabled) {
+      await finishCommittedDoseAction(refreshDoseLogs, async () => {
+        if (!settingsRef.current.notificationsEnabled) return;
         await reconcileNotifications(
           repos.reminderArtifacts,
           repos.medications,
@@ -348,15 +356,15 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
           repos.settings,
           reminderScheduler
         );
-      }
-    },
-    [refreshDoseLogs]
+      }, queueReminderSync);
+    }),
+    [doseSvc, refreshDoseLogs, repos, reminderScheduler, queueReminderSync, runDoseOperation]
   );
 
   const snoozeDose = useCallback(
-    async (occurrenceId: string, medicationId: string, scheduleId: string) => {
+    (occurrenceId: string, medicationId: string, scheduleId: string) => runDoseOperation(occurrenceId, async () => {
       const snoozeCount = await repos.doseLogs.countSnoozes(occurrenceId);
-      if (snoozeCount >= 3) return;
+      if (snoozeCount >= 3) throw new Error("Esta dose já foi adiada 3 vezes. Você ainda pode registrá-la como tomada ou pulada.");
       const now = new Date();
       const snoozeMs = 5 * 60 * 1000;
       const snoozedUntil = new Date(now.getTime() + snoozeMs);
@@ -368,7 +376,6 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         now.toISOString(),
         formatLocalDateTime(snoozedUntil)
       );
-      await refreshDoseLogs();
 
       const occurrence: DoseOccurrence = {
         id: occurrenceId,
@@ -381,6 +388,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       const medication = medications.find((m) => m.id === medicationId);
       const schedule = schedules.find((s) => s.id === scheduleId);
 
+      await finishCommittedDoseAction(refreshDoseLogs, async () => {
       await reminderScheduler.cancelSingle(occurrenceId);
       if (medication && schedule) {
         await reminderScheduler.scheduleForOccurrence(
@@ -396,8 +404,9 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
           }
         );
       }
-    },
-    [medications, refreshDoseLogs, schedules]
+      }, queueReminderSync);
+    }),
+    [doseSvc, medications, refreshDoseLogs, schedules, repos, reminderScheduler, queueReminderSync, runDoseOperation]
   );
 
   const updateMedicationWithSchedule = useCallback(
@@ -427,9 +436,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       const medicationSchedules = schedules.filter(
         (schedule) => schedule.medicationId === medicationId
       );
-      const existingSchedule =
-        medicationSchedules.find((schedule) => schedule.isActive) ||
-        medicationSchedules[0];
+      const existingSchedule = getCurrentSchedule(medicationSchedules);
       const kind = (scheduleKind as MedicationSchedule["kind"]) || existingSchedule?.kind || "dailyTimes";
 
       let persistedSchedule: MedicationSchedule;
@@ -441,7 +448,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
           intervalHours: kind === "intervalHours" ? (intervalHours || existingSchedule.intervalHours || 8) : 0,
           weekdays: kind === "weekdays" ? (weekdays || existingSchedule.weekdays) : [],
           anchorAt:
-            kind === "intervalHours" && time
+            kind === "intervalHours" && time &&
+            (existingSchedule.kind !== kind || existingSchedule.times[0] !== time || existingSchedule.intervalHours !== intervalHours)
               ? `${formatLocalDate(new Date())}T${time}:00`
               : kind === "intervalHours"
                 ? existingSchedule.anchorAt
@@ -495,6 +503,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
 
   const markOnboardingIntroSeen = useCallback(async () => {
     await persistSettings({ onboardingIntroSeen: true });
+  }, [persistSettings]);
+
+  const saveOnboardingStep = useCallback(async (onboardingStep: NonNullable<ReminderSettings["onboardingStep"]>) => {
+    await persistSettings({ onboardingStep });
   }, [persistSettings]);
 
   const completeOnboarding = useCallback(async (name?: string) => {
@@ -551,6 +563,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         error,
         retryLoadingData,
         refreshDoseLogs,
+        saveOnboardingStep,
         reminderSyncPending,
         settings,
         addMedication,

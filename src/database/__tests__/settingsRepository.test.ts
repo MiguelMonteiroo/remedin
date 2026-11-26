@@ -102,6 +102,7 @@ describe("settings repository", () => {
       await repository.update(updatedSettings);
       await repository.update({ userName: "Helena", profileAvatar: "owl" });
       await repository.update({ onboardingIntroSeen: true });
+      await repository.update({ onboardingStep: "exact" });
       await repository.update({ userName: "Lena" });
       await repository.update({ notificationsEnabled: false });
 
@@ -111,6 +112,7 @@ describe("settings repository", () => {
         userName: "Lena",
         profileAvatar: "owl",
         onboardingIntroSeen: true,
+        onboardingStep: "exact",
       });
     } finally {
       close();

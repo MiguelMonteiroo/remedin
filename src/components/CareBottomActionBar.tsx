@@ -7,9 +7,10 @@ type Props = {
   paused: boolean;
   onTogglePause: () => void;
   onDelete: () => void;
+  busy?: boolean;
 };
 
-export function CareBottomActionBar({ paused, onTogglePause, onDelete }: Props) {
+export function CareBottomActionBar({ paused, onTogglePause, onDelete, busy = false }: Props) {
   const PauseIcon = paused ? Play : Pause;
 
   return (
@@ -19,6 +20,8 @@ export function CareBottomActionBar({ paused, onTogglePause, onDelete }: Props) 
         variant="ghost"
         icon={PauseIcon}
         onPress={onTogglePause}
+        disabled={busy}
+        accessibilityState={{ disabled: busy, busy }}
         style={styles.action}
         accessibilityLabel={paused ? "Reativar medicamento" : "Pausar medicamento"}
       />
@@ -27,6 +30,7 @@ export function CareBottomActionBar({ paused, onTogglePause, onDelete }: Props) 
         variant="dangerSoft"
         icon={Trash2}
         onPress={onDelete}
+        disabled={busy}
         style={styles.action}
         accessibilityLabel="Remover medicamento"
       />

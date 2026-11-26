@@ -85,7 +85,7 @@ describe("database migrations", () => {
     }
   });
 
-  it("migrates the database to version 4", async () => {
+  it("migrates the database to version 5", async () => {
     const { db, close } = createTestDatabase();
 
     try {
@@ -94,7 +94,7 @@ describe("database migrations", () => {
         "PRAGMA user_version"
       );
 
-      expect(version?.user_version).toBe(4);
+      expect(version?.user_version).toBe(5);
     } finally {
       close();
     }

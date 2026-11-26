@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated } from "react-native";
 import { useAppData } from "../../services/appDataProvider";
 import { motionDurations, motionEasings } from "../../theme/motion";
@@ -25,17 +25,28 @@ export function FirstRunOnboarding({
     completeOnboarding,
     settings,
     updateProfile,
+    saveOnboardingStep,
   } = useAppData();
 
   const initialName = settings.userName.trim();
   const [step, setStep] = useState<OnboardingStep>(
-    initialStep ?? (initialName ? "guide" : "welcome")
+    initialStep ?? (initialName || settings.onboardingStep === "profile"
+      ? settings.onboardingStep ?? "guide"
+      : "welcome")
   );
   const [name, setName] = useState(initialName);
   const [avatar, setAvatar] = useState<ProfileAvatar | undefined>(settings.profileAvatar);
   const [nameError, setNameError] = useState("");
   const [confirmSkipVisible, setConfirmSkipVisible] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [progressError, setProgressError] = useState("");
+
+  useEffect(() => {
+    if (onPreviewFinish || settings.onboardingCompleted || !saveOnboardingStep) return;
+    void saveOnboardingStep(step).then(() => setProgressError(""), () => {
+      setProgressError("Não foi possível salvar seu progresso. Ao reabrir o app, talvez seja necessário repetir esta etapa.");
+    });
+  }, [step, saveOnboardingStep, onPreviewFinish, settings.onboardingCompleted]);
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -72,6 +83,7 @@ export function FirstRunOnboarding({
     dndConfigured,
     batteryConfigured,
     requestBasicNotifications,
+    chooseLockScreenDetails,
     requestExactAlarms,
     requestFullScreenAlarm,
     requestDoNotDisturbAccess,
@@ -130,7 +142,8 @@ export function FirstRunOnboarding({
     if (busy) return;
     if (step === "profile") transitionToStep("welcome");
     else if (step === "notifications") transitionToStep("guide");
-    else if (step === "exact") transitionToStep("notifications");
+    else if (step === "lockScreenDetails") transitionToStep("notifications");
+    else if (step === "exact") transitionToStep("lockScreenDetails");
     else if (step === "fullScreen") transitionToStep("exact");
     else if (step === "ready") transitionToStep("fullScreen");
   }
@@ -139,6 +152,7 @@ export function FirstRunOnboarding({
     if (busy) return;
     if (step === "profile") continueFromProfile();
     else if (step === "notifications") requestBasicNotifications();
+    else if (step === "lockScreenDetails") chooseLockScreenDetails(true);
     else if (step === "exact") requestExactAlarms();
     else if (step === "fullScreen") requestFullScreenAlarm();
     else finishOnboarding();
@@ -146,6 +160,7 @@ export function FirstRunOnboarding({
 
   function handleSkip() {
     if (step === "notifications") setConfirmSkipVisible(true);
+    else if (step === "lockScreenDetails") chooseLockScreenDetails(false);
     else if (step === "exact") transitionToStep("fullScreen");
     else if (step === "fullScreen") skipFullScreen();
   }
@@ -192,7 +207,7 @@ export function FirstRunOnboarding({
         if (nameError) setNameError("");
       }}
       onSkip={handleSkip}
-      permissionMessage={permissionMessage}
+      permissionMessage={progressError || permissionMessage}
       slideAnim={slideAnim}
       step={step}
     />

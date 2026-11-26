@@ -19,6 +19,7 @@ import { radii } from "../theme/radii";
 import { spacing } from "../theme/spacing";
 import { ptBR } from "../i18n/ptBR";
 import { formatHistoryActionDateTime } from "../utils/stats";
+import { getCurrentSchedule } from "../utils/currentSchedule";
 
 type Props = NativeStackScreenProps<RootStackParamList, "MedicationDetail">;
 
@@ -27,6 +28,8 @@ export function MedicationDetailScreen({ route, navigation }: Props) {
   const styles = createStyles(colors);
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [changingPause, setChangingPause] = useState(false);
+  const [actionError, setActionError] = useState("");
   const { medicationId } = route.params;
   const { medications, schedules, doseLogs, removeMedication, setMedicationPaused } = useAppData();
   const medication = medications.find((item) => item.id === medicationId);
@@ -44,17 +47,35 @@ export function MedicationDetailScreen({ route, navigation }: Props) {
     );
   }
 
-  const firstSchedule = medicationSchedules.find((item) => item.isActive) ?? medicationSchedules[0];
+  const firstSchedule = getCurrentSchedule(medicationSchedules);
   const paused = medication.isPaused;
 
   async function confirmDelete() {
+    if (deleting) return;
     setDeleting(true);
+    setActionError("");
     try {
       await removeMedication(medicationId);
       setDeleteDialogVisible(false);
       navigation.goBack();
+    } catch {
+      setDeleteDialogVisible(false);
+      setActionError("Não foi possível remover o medicamento. Tente novamente.");
     } finally {
       setDeleting(false);
+    }
+  }
+
+  async function togglePause() {
+    if (changingPause) return;
+    setChangingPause(true);
+    setActionError("");
+    try {
+      await setMedicationPaused(medicationId, !paused);
+    } catch {
+      setActionError("Não foi possível alterar a pausa. Tente novamente.");
+    } finally {
+      setChangingPause(false);
     }
   }
 
@@ -107,9 +128,11 @@ export function MedicationDetailScreen({ route, navigation }: Props) {
 
         <CareBottomActionBar
           paused={paused}
-          onTogglePause={() => setMedicationPaused(medicationId, !paused)}
+          busy={deleting || changingPause}
+          onTogglePause={togglePause}
           onDelete={() => setDeleteDialogVisible(true)}
         />
+        {actionError ? <AppText accessibilityRole="alert" style={{ color: colors.danger }}>{actionError}</AppText> : null}
       </ScrollView>
 
       <ConfirmationDialog

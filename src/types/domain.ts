@@ -22,6 +22,8 @@ export type MedicationSchedule = {
   anchorAt: string;
   snoozeMinutes: number;
   isActive: boolean;
+  effectiveFrom?: string;
+  effectiveUntil?: string;
 };
 
 export type DoseStatus = "pending" | "taken" | "skipped" | "snoozed" | "unrecorded";
@@ -81,6 +83,7 @@ export type ReminderSettings = {
   showLockScreenDetails: boolean;
   reminderSetupCompleted: boolean;
   onboardingCompleted: boolean;
+  onboardingStep?: "welcome" | "profile" | "guide" | "notifications" | "lockScreenDetails" | "exact" | "fullScreen" | "ready";
 };
 
 export type ReminderArtifactKind =

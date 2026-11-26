@@ -6,6 +6,7 @@ import { Screen } from "../components/ui/Screen";
 import { RootStackParamList } from "../navigation/types";
 import { useAppData } from "../services/appDataProvider";
 import { useAppTheme } from "../theme/ThemeProvider";
+import { getCurrentSchedule } from "../utils/currentSchedule";
 
 type Props = NativeStackScreenProps<RootStackParamList, "EditMedication">;
 
@@ -14,9 +15,7 @@ export function EditMedicationScreen({ route, navigation }: Props) {
   const { medicationId } = route.params;
   const { medications, schedules, updateMedicationWithSchedule } = useAppData();
   const medication = medications.find((item) => item.id === medicationId);
-  const schedule =
-    schedules.find((item) => item.medicationId === medicationId && item.isActive) ??
-    schedules.find((item) => item.medicationId === medicationId);
+  const schedule = getCurrentSchedule(schedules.filter((item) => item.medicationId === medicationId));
 
   if (!medication) {
     return (

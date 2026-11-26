@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BackHandler,
   DeviceEventEmitter,
@@ -127,6 +127,8 @@ export function DoseAlarmScreen({
     initialPayload ? [initialPayload] : []
   );
   const [busyId, setBusyId] = useState<string | null>(null);
+  const actionInFlight = useRef(false);
+  const [actionError, setActionError] = useState("");
   const [loadFailed, setLoadFailed] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
 
@@ -211,10 +213,12 @@ export function DoseAlarmScreen({
       onClose?.();
       return;
     }
-    if (busyId) return;
+    if (actionInFlight.current) return;
+    actionInFlight.current = true;
     setBusyId(payload.notificationId);
+    setActionError("");
     try {
-      await executeDefaultNotificationCommand({
+      const result = await executeDefaultNotificationCommand({
         actionId,
         commandId: `${payload.notificationId}:${actionId}`,
         doseOccurrenceId: String(payload.data.doseOccurrenceId || ""),
@@ -223,6 +227,14 @@ export function DoseAlarmScreen({
         scheduledAt: String(payload.data.scheduledAt || ""),
         notificationId: payload.notificationId,
       });
+      if (result.status === "snooze-limit") {
+        setActionError("Esta dose já foi adiada 3 vezes. Marque como tomada quando tomar o medicamento.");
+        return;
+      }
+      if (result.status === "invalid") {
+        setActionError("Este lembrete não está mais disponível. Confira seus medicamentos na tela inicial.");
+        return;
+      }
       const remaining = payloads.filter(
         (item) => item.notificationId !== payload.notificationId
       );
@@ -231,7 +243,10 @@ export function DoseAlarmScreen({
         onClose?.();
         if (!embedded) await closeActiveAlarm(payload.notificationId);
       }
+    } catch {
+      setActionError("Não foi possível concluir a ação. Tente novamente; seus registros já salvos serão preservados.");
     } finally {
+      actionInFlight.current = false;
       await Promise.resolve(onDoseAction?.()).catch(() => undefined);
       setBusyId(null);
     }
@@ -325,6 +340,7 @@ export function DoseAlarmScreen({
               } agora`}
         </AppText>
 
+        {actionError ? <AppText accessibilityRole="alert" style={{ color: colors.danger }}>{actionError}</AppText> : null}
         {payloads.map((payload) => {
           const canMarkTaken = payload.data.showDetails !== "false";
           const busy = busyId === payload.notificationId;

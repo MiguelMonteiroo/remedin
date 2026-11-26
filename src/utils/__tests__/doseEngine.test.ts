@@ -44,6 +44,12 @@ function makeSchedule(
 }
 
 describe("generateDoseOccurrencesForDate", () => {
+  it("keeps the effective snooze time after it becomes due, including across midnight", () => {
+    const occurrence: DoseOccurrence = { id: "dose", medicationId: "med-1", scheduleId: "sched-1", scheduledAt: "2026-07-03T23:58:00", status: "pending" };
+    const log: DoseLog = { id: "log", doseOccurrenceId: "dose", medicationId: "med-1", scheduleId: "sched-1", action: "snoozed", actionAt: "2026-07-03T23:58:00", snoozedUntil: "2026-07-04T00:03:00" };
+    const resolved = resolveDoseOccurrence(occurrence, [log], new Date("2026-07-04T00:04:00"));
+    expect(resolved.occurrence).toMatchObject({ scheduledAt: "2026-07-04T00:03:00", status: "pending" });
+  });
   it("generates occurrences for dailyTimes schedule", () => {
     const result = generateDoseOccurrencesForDate(
       makeMed(),
