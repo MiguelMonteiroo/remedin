@@ -6,7 +6,7 @@
 - Responsável: Miguel de França Monteiro.
 - Contato público: monteiro.miguel9752@gmail.com.
 - Página estática gerada: `privacy-site/index.html`.
-- URL prevista após ativar Pages: https://MiguelMonteiroo.github.io/medminder/.
+- URL prevista após ativar Pages: https://MiguelMonteiroo.github.io/remedin/.
 - A URL prevista só deve ser cadastrada no Play Console depois de retornar HTTP 200 e exibir a política sem login.
 
 ## Publicação no GitHub Pages
