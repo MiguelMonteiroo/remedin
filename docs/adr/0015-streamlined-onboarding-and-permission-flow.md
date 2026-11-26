@@ -6,6 +6,8 @@ Accepted — updates the onboarding flow from [ADR 0007](./0007-first-run-onboar
 
 ## Context
 
+Current-state note (25 November 2026): authentication has been removed and lockscreen details are no longer enabled automatically. Setup now includes four steps: notifications, explicit lockscreen-details choice (hidden by default), exact alarms and full-screen alarms. Optional DND/battery setup remains in the completion screen. See [notification flow](../product/notification-flow.md) and [reliability notes](../product/app-reliability-qa.md). The three-step sequence below is historical.
+
 Following the introduction of the Coral brand identity and authentication screens in Phase 1 (ADR 0014), the post-login first-run onboarding (`FirstRunOnboarding.tsx`) had two UX issues for Remedin's adult and older-adult audience:
 
 1. **Visual discontinuity:** The guide and permission screens still used flat divider rows and rectangular buttons (`radii.md`) instead of the Coral header + rounded bottom sheet (`radii.xl = 32px`), editorial cards, and pill buttons (`radii.pill`, `minHeight: 56px`) established in Phase 1.

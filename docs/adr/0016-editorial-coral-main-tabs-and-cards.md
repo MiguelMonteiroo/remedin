@@ -6,6 +6,8 @@ Accepted — complements [ADR 0001](./0001-ui-navigation-tabs.md), [ADR 0002](./
 
 ## Context
 
+Current-state note (25 November 2026): the Editorial Coral identity remains. Navigation now uses a fixed full-width bottom bar, not the floating bar proposed below. [DESIGN.md](../../DESIGN.md) describes the current visuals. Earlier authentication references are historical; the app uses a local profile.
+
 After completing Phase 1 (Splash & Auth) and Phase 2 (Quick Guide & Permission Onboarding) with the Editorial Coral identity (`#A44945`, `#FAF7F6` light / `#291C1C` dark, pill buttons, and `AtkinsonHyperlegibleNext`), the four main tabs (`HomeScreen`, `MedicationsScreen`, `HistoryScreen`, `SettingsScreen`) and `FloatingTabBar` still had legacy visual and interaction gaps:
 
 1. **Legacy pastel tokens in Home cards:** `DailyProgressSummary` and `CareDoseActionCard` still referenced legacy tokens (`bentoSun`, `bentoMenta`, `bentoSky`, `navyDeep`) that clashed with the warm Coral/Terracotta palette.

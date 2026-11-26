@@ -15,9 +15,9 @@ Avisar o usuario antes de uma dose e solicitar uma acao no horario agendado, mes
 7. A ausencia de interacao nao registra a dose como tomada, pulada ou perdida; ela continua pendente.
 8. Se o usuario ignorar o alarme, o app entrega um unico reforco dez minutos depois como notificacao de alta prioridade, sem abrir a tela cheia novamente.
 9. Se o usuario escolher `Adiar 5 min`, o app agenda um novo alarme completo para cinco minutos depois.
-10. O pre-aviso usa um unico som curto e suave, sem vibracao continua e sem tela cheia.
+10. O pre-aviso e silencioso, sem som, vibracao, tela cheia ou iluminacao da tela. Usa o canal de baixa importancia `medication-pre-alerts-v2`.
 11. O pre-aviso identifica o medicamento, a dosagem quando informada e o horario agendado.
-12. O pre-aviso nao oferece acoes rapidas; um toque abre a Home e destaca as doses daquele horario.
+12. O pre-aviso nao oferece acoes rapidas; um toque abre o app normalmente, sem apresentar a tela de alarme.
 13. Doses do mesmo minuto geram um unico pre-aviso, como `2 medicamentos em 5 minutos`.
 14. Ocorrencias agendadas para o mesmo minuto sao apresentadas em uma unica janela de doses.
 15. Cada dose da janela possui suas proprias acoes `Marcar como tomado` e `Adiar 5 min`.
@@ -54,7 +54,7 @@ A experiencia em tela cheia abre a aplicacao principal do Remedin pela `MainActi
 
 Quando o alarme comeca com o aparelho bloqueado ou a tela apagada, o servico acompanha `ACTION_USER_PRESENT` somente durante a vigencia desse alarme. Se a tela cheia nao tiver sido mantida pelo fabricante, a task existente do Remedin volta para frente imediatamente apos o desbloqueio. O receiver e removido ao tomar, adiar, cancelar, encerrar o teste ou atingir o timeout, impedindo que alarmes encerrados reabram o app.
 
-A tela segue o design system Home Care Cards e a referencia visual em `docs/design/dose-alarm-screen.png`: fundo creme, verde profundo, acento pessego, bordas sutis, raio maximo de 8 px, icones lineares e acoes individuais por dose.
+A tela segue a identidade Editorial Coral descrita em [DESIGN.md](../../DESIGN.md), com temas claro e escuro, fonte Atkinson Hyperlegible Next e componentes compartilhados. O codigo de referencia e [DoseAlarmScreen.tsx](../../src/screens/DoseAlarmScreen.tsx). Imagens antigas de exploracao ficam apenas no ambiente local.
 
 Quando houver notas do medicamento, a tela mostra no maximo duas linhas por dose. Notas seguem a preferencia `Mostrar detalhes na tela bloqueada` e ficam ocultas quando essa preferencia estiver desativada.
 
@@ -66,14 +66,14 @@ Os botoes de volume ajustam apenas o volume; eles nao registram, pulam nem adiam
 
 ## Momento da configuracao
 
-Depois que o primeiro medicamento for salvo, o app apresenta o guia `Prepare seus lembretes` nesta ordem:
+No primeiro acesso, depois das boas-vindas, do perfil local e do guia de funcionalidades, o app apresenta estas etapas:
 
 1. `Receber lembretes`.
-2. `Tocar no silencioso e Nao Perturbe`, como opcao recomendada e nao obrigatoria.
+2. Escolha explicita de mostrar detalhes na tela bloqueada, com detalhes ocultos por padrao.
 3. `Avisar no horario exato`.
 4. `Alarme em tela cheia`, como opcao recomendada e nao obrigatoria.
 
-Os mesmos controles permanecem disponiveis em `Perfil > Lembretes`. O app nao solicita essas permissoes sem contexto na primeira abertura.
+Na conclusao, `Tocar no Nao Perturbe` e `Bateria sem restricoes` sao opcoes adicionais. Os mesmos controles permanecem disponiveis em `Perfil > Lembretes`. Confirmar a decisao de pular notificacoes conclui o onboarding sem pedir os acessos dependentes. A etapa atual e salva para retomar em uma nova abertura.
 
 ## Som e controle do sistema
 

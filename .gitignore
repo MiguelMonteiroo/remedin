@@ -68,3 +68,12 @@ docs/superpowers/
 .impeccable/
 .swarm/
 stitch-imports/
+
+# Local knowledge vault, historical prototypes, and generated policy site
+/remedin (docs)/
+/preview/
+/docs/design/references/remedin-v2/
+/docs/design/dose-alarm-screen.png
+/skills-lock.json
+/privacy-site/
+/metro-dev.log

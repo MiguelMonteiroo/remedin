@@ -31,4 +31,4 @@ Use as cores semânticas de sucesso, atenção e erro para o estado corresponden
 
 ## Perfil
 
-A [galeria](preview/assets/avatars) contém dez ilustrações 2D que funcionam no recorte circular. O seletor aparece na configuração inicial e na edição do perfil. O nome e o identificador do avatar são armazenados localmente.
+A [galeria](assets/avatars) contém dez ilustrações 2D que funcionam no recorte circular. O seletor aparece na configuração inicial e na edição do perfil. O nome e o identificador do avatar são armazenados localmente.

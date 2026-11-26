@@ -1,7 +1,7 @@
 # ADR 0013 - Clean Edition: Migração para estética arejada e leve
 
 ## Status
-Accepted
+Superseded for the current visual identity by [ADR 0016](0016-editorial-coral-main-tabs-and-cards.md) and [DESIGN.md](../../DESIGN.md). Preserved as a historical decision; the referenced prototypes are local development materials, not build inputs.
 
 ## Decision
 Migrar a linguagem visual do app de um estilo "neo-brutalista" (bordas grossas, sombras pesadas, fundos creme quentes) para a estética **Clean Edition**: superfícies brancas, bordas quase invisíveis, sombras mínimas, espaçamento generoso e tab bar flutuante em formato pill.

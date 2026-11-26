@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Partially superseded. The Coral splash and identity remain; local authentication, passwords and Google login were removed. The current app uses a local name/avatar profile, and SQLite migration 4 removes the old authentication settings. See [CONTEXT.md](../../CONTEXT.md) for the current model. The decision below records the earlier design, not the current login requirements.
 
 ## Context
 

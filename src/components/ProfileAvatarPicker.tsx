@@ -5,16 +5,16 @@ import { spacing } from "../theme/spacing";
 import { AppText } from "./ui/AppText";
 
 const avatars = {
-  bear: { label: "Urso", image: require("../../preview/assets/avatars/bear.jpg") },
-  cat: { label: "Gato", image: require("../../preview/assets/avatars/cat.jpg") },
-  dog: { label: "Cachorro", image: require("../../preview/assets/avatars/dog.jpg") },
-  owl: { label: "Coruja", image: require("../../preview/assets/avatars/owl.jpg") },
-  capybara: { label: "Capivara", image: require("../../preview/assets/avatars/capybara.jpg") },
-  rabbit: { label: "Coelho", image: require("../../preview/assets/avatars/rabbit.jpg") },
-  penguin: { label: "Pinguim", image: require("../../preview/assets/avatars/penguin.jpg") },
-  axolotl: { label: "Axolote", image: require("../../preview/assets/avatars/axolotl.jpg") },
-  turtle: { label: "Tartaruga", image: require("../../preview/assets/avatars/turtle.jpg") },
-  octopus: { label: "Polvo", image: require("../../preview/assets/avatars/octopus.jpg") },
+  bear: { label: "Urso", image: require("../../assets/avatars/bear.jpg") },
+  cat: { label: "Gato", image: require("../../assets/avatars/cat.jpg") },
+  dog: { label: "Cachorro", image: require("../../assets/avatars/dog.jpg") },
+  owl: { label: "Coruja", image: require("../../assets/avatars/owl.jpg") },
+  capybara: { label: "Capivara", image: require("../../assets/avatars/capybara.jpg") },
+  rabbit: { label: "Coelho", image: require("../../assets/avatars/rabbit.jpg") },
+  penguin: { label: "Pinguim", image: require("../../assets/avatars/penguin.jpg") },
+  axolotl: { label: "Axolote", image: require("../../assets/avatars/axolotl.jpg") },
+  turtle: { label: "Tartaruga", image: require("../../assets/avatars/turtle.jpg") },
+  octopus: { label: "Polvo", image: require("../../assets/avatars/octopus.jpg") },
 };
 
 export function ProfileAvatarImage({ avatar, size }: { avatar: ProfileAvatar; size: number }) {

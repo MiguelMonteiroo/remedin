@@ -20,13 +20,15 @@ Em outro terminal, rode `npm run android`. No menu de desenvolvimento, **Telas d
 | Inicialização, providers, primeira abertura e alarme direto | [App.tsx](App.tsx), [index.ts](index.ts) |
 | Telas, componentes e navegação | [src/screens](src/screens), [src/components](src/components), [src/navigation](src/navigation) |
 | Marca, temas e tipografia | [DESIGN.md](DESIGN.md), [src/theme](src/theme), [RemedinBrand.tsx](src/components/brand/RemedinBrand.tsx) |
-| Perfil local e avatares | [ProfileAvatarPicker.tsx](src/components/ProfileAvatarPicker.tsx), [preview/assets/avatars](preview/assets/avatars) |
+| Perfil local e avatares | [ProfileAvatarPicker.tsx](src/components/ProfileAvatarPicker.tsx), [assets/avatars](assets/avatars) |
 | Primeiro acesso e permissões do Android | [FirstRunOnboarding.tsx](src/components/onboarding/FirstRunOnboarding.tsx), [useOnboardingPermissions.ts](src/components/onboarding/useOnboardingPermissions.ts) |
 | Persistência e migrações | [src/database](src/database) |
 | Doses, permissões e conciliação de lembretes | [src/services](src/services), [src/services/reminders](src/services/reminders) |
 | Serviço de áudio, AlarmManager e reinicialização | [android/app/src/main/java/com/remedin](android/app/src/main/java/com/remedin) |
 
-Os HTMLs em `preview/` e os ADRs registram etapas do projeto. Para alterar a experiência atual, use as telas React Native e a documentação acima.
+Os ADRs em [docs/adr](docs/adr) registram as decisões e suas substituições. Para alterar a experiência atual, use as telas React Native e a documentação acima. Protótipos HTML, imagens antigas e o cofre Obsidian são materiais locais não versionados; não são necessários para compilar ou executar o app.
+
+A política de privacidade usa [src/legal/privacy.json](src/legal/privacy.json) como fonte. O [workflow do Pages](.github/workflows/privacy-pages.yml) gera e publica `privacy-site/`; essa saída não é versionada. As instruções estão em [Privacidade e envio](docs/legal/privacy-and-store-submission.md).
 
 ## Bancada de testes
 
