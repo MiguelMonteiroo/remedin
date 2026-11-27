@@ -15,7 +15,7 @@ Avisar o usuario antes de uma dose e solicitar uma acao no horario agendado, mes
 7. A ausencia de interacao nao registra a dose como tomada, pulada ou perdida; ela continua pendente.
 8. Se o usuario ignorar o alarme, o app entrega um unico reforco dez minutos depois como notificacao de alta prioridade, sem abrir a tela cheia novamente.
 9. Se o usuario escolher `Adiar 5 min`, o app agenda um novo alarme completo para cinco minutos depois.
-10. O pre-aviso e silencioso, sem som, vibracao, tela cheia ou iluminacao da tela. Usa o canal de baixa importancia `medication-pre-alerts-v2`.
+10. O pre-aviso usa o canal `medication-pre-alerts-v4`, com importancia `DEFAULT`, sem som ou vibracao e sem tela cheia. A importancia padrao e a visibilidade publica permitem exibir o aviso na tela bloqueada, respeitando as configuracoes do Android. O aviso pode iluminar a tela; detalhes pessoais continuam condicionados a escolha de privacidade do usuario.
 11. O pre-aviso identifica o medicamento, a dosagem quando informada e o horario agendado.
 12. O pre-aviso nao oferece acoes rapidas; um toque abre o app normalmente, sem apresentar a tela de alarme.
 13. Doses do mesmo minuto geram um unico pre-aviso, como `2 medicamentos em 5 minutos`.

@@ -5,6 +5,7 @@ import { useAppTheme } from "../theme/ThemeProvider";
 import { type ThemeColors } from "../theme/theme";
 import { radii } from "../theme/radii";
 import { spacing } from "../theme/spacing";
+import { isLargeText } from "../utils/accessibilityLayout";
 
 type Props = {
   time: string;
@@ -34,7 +35,7 @@ export function CareDoseActionCard({
   const { colors } = useAppTheme();
   const styles = createStyles(colors);
   const { width, fontScale } = useWindowDimensions();
-  const expandedLayout = width < 360 || fontScale >= 1.3;
+  const expandedLayout = width < 360 || isLargeText(fontScale);
   const hasSecondaryActions = Boolean(onSnooze || onSkip);
 
   return (

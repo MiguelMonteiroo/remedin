@@ -32,11 +32,14 @@ A política de privacidade usa [src/legal/privacy.json](src/legal/privacy.json) 
 
 ## Bancada de testes
 
+Os [testes E2E Android](e2e/README.md) usam um APK isolado (`com.remedin.e2e`), sem Metro e sem limpar os dados do aplicativo normal. A documentação inclui a matriz de emuladores, escalas de fonte e coleta de evidências locais.
+
 O [workflow de CI](.github/workflows/ci.yml) instala as dependências com o lockfile, checa o TypeScript e roda o Jest em cada pull request.
 
 ```sh
 npm run typecheck
 npm test -- --runInBand --detectOpenHandles
+npm run test:e2e-runner
 ```
 
 A suíte usa SQLite real em memória para migrações e transações. Inclui cargas de 72 mil registros de dose e 512 transações concorrentes com falhas simuladas. Os testes dos lembretes cobrem perda de triggers, doses já registradas e soneca que atravessa meia-noite.

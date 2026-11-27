@@ -77,3 +77,7 @@ stitch-imports/
 /skills-lock.json
 /privacy-site/
 /metro-dev.log
+/e2e/artifacts/
+/android/e2e/build/
+/e2e-build.log
+/e2e-driver-build.log

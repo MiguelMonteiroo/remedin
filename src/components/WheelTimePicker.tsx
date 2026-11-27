@@ -192,11 +192,13 @@ function WheelColumn({
   }
 
   function adjustValue(delta: number) {
+    clearFallbackTimer();
     const nextIndex = wrapIndex(selectedIndex + delta, options.length);
     onSelect(options[nextIndex]);
+    // A late programmatic momentum event must not undo an accessibility choice.
     scrollToVisualIndex(
       getCenteredVisualIndex(nextIndex, options.length, CYCLE_COUNT),
-      true
+      false
     );
   }
 

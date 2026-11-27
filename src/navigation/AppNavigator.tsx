@@ -16,6 +16,7 @@ import { useAppTheme } from "../theme/ThemeProvider";
 import { ptBR } from "../i18n/ptBR";
 import { fontFamilies } from "../theme/typography";
 import { AppText } from "../components/ui/AppText";
+import { isLargeText } from "../utils/accessibilityLayout";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tabs = createBottomTabNavigator<RootTabParamList>();
@@ -118,7 +119,7 @@ export function BottomNavigationBar({ state, navigation }: BottomTabBarProps) {
               variant="caption"
               weight={focused ? "bold" : "medium"}
             >
-              {route.name === "Medications" && fontScale >= 1.3 ? ptBR.tabs.medicationsShort : config.label}
+              {route.name === "Medications" && isLargeText(fontScale) ? ptBR.tabs.medicationsShort : config.label}
             </AppText>
           </Pressable>
         );

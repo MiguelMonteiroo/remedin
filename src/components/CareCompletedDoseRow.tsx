@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
 import { Check, ChevronRight, Minus, RotateCcw } from "lucide-react-native";
 import { AppText } from "./ui/AppText";
 import { AppButton } from "./ui/AppButton";
@@ -7,6 +7,8 @@ import { type ThemeColors } from "../theme/theme";
 import { radii } from "../theme/radii";
 import { spacing } from "../theme/spacing";
 import { DoseStatus } from "../types/domain";
+import { ptBR } from "../i18n/ptBR";
+import { isLargeText } from "../utils/accessibilityLayout";
 
 type Props = {
   time: string;
@@ -28,19 +30,21 @@ export function CareCompletedDoseRow({
   undoing = false,
 }: Props) {
   const { colors } = useAppTheme();
+  const { width, fontScale } = useWindowDimensions();
   const styles = createStyles(colors);
+  const stackActions = Boolean(onUndo) && (width < 390 || isLargeText(fontScale));
   const isSkipped = status === "skipped";
   const Icon = isSkipped ? Minus : Check;
   const statusText = isSkipped ? "Pulada" : "Tomada";
-  const title = dosage ? `${name} (${dosage})` : name;
+  const title = dosage && dosage !== ptBR.form.noDosage ? `${name} (${dosage})` : name;
 
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, stackActions && styles.stackedRow]}>
       <Pressable
         onPress={onPress}
-        style={({ pressed }) => [styles.details, pressed && styles.pressed]}
+        style={({ pressed }) => [styles.details, stackActions && styles.stackedDetails, pressed && styles.pressed]}
         accessibilityRole="button"
-        accessibilityLabel={`Dose ${statusText.toLowerCase()}: ${title}`}
+        accessibilityLabel={`Dose ${statusText.toLowerCase()}: ${title}, às ${time}`}
       >
         <View style={[styles.statusIcon, isSkipped && styles.skippedIcon]}>
           <Icon color={isSkipped ? colors.danger : colors.success} size={18} />
@@ -61,14 +65,15 @@ export function CareCompletedDoseRow({
           </AppText>
         </View>
       </Pressable>
-      {isSkipped && onUndo ? (
+      {onUndo ? (
         <AppButton
-          accessibilityLabel="Desfazer dose pulada"
+          accessibilityLabel={`Desfazer dose ${isSkipped ? "pulada" : "tomada"}`}
+          accessibilityHint={`Volta a dose de ${name}, das ${time}, para pendente.`}
           disabled={undoing}
           icon={RotateCcw}
           onPress={onUndo}
           size="compact"
-          style={styles.undoButton}
+          style={stackActions ? styles.stackedUndoButton : styles.undoButton}
           title="Desfazer"
           variant="ghost"
         />
@@ -88,6 +93,9 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     minHeight: 72,
     paddingVertical: spacing.md,
   },
+  stackedRow: { alignItems: "stretch", flexDirection: "column", gap: spacing.sm },
+  stackedDetails: { flex: 0, width: "100%" },
+  stackedUndoButton: { alignSelf: "flex-end", marginLeft: 0 },
   details: {
     alignItems: "center",
     flex: 1,

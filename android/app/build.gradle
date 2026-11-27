@@ -104,6 +104,16 @@ android {
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
+        if (project.hasProperty("e2e")) {
+            e2e {
+                initWith release
+                applicationIdSuffix ".e2e"
+                matchingFallbacks = ["release"]
+                signingConfig signingConfigs.debug
+                manifestPlaceholders = [usesCleartextTraffic: "false"]
+                resValue "string", "app_name", "Remedin E2E"
+            }
+        }
     }
 }
 
